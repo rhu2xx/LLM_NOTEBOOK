@@ -3,12 +3,20 @@ root: intro
 parts:
   - caption: Basics
     chapters:
-    - file: docs/0_basics/pytorch_internals.ipynb
-      # sections:
-      # - file: markdown-notebooks
+      - file: docs/0_basics/0_test
+      - file: docs/0_basics/pytorch
+      - file: docs/0_basics/pytorch_basics
+      - file: docs/0_basics/pytorch_internals
 
-  - caption: Two
+  - caption: CUDA From Scratch
     chapters:
-    - file: docs/0_test
-    - file: notebooks
+      - file: docs/1_cuda_from_scratch/start
+
+  - caption : others
+    chapters:
+      - file: docs/others/torch.scatter&gather
+
+# Notes:
+# - Use paths without file extensions and refer to notebooks (.ipynb) or markdown (.md) files.
+# - `root: intro` keeps the intro page as the book root (used previously).
 

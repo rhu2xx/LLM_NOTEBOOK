@@ -58,8 +58,11 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'docs/0_basics/pytorch_basics';</script>
+    <link rel="icon" href="https://github.com/rhu2xx/picx-images-hosting/raw/master/20251021/cat_eye.4xuxugatot.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Pytorch internals" href="pytorch_internals.html" />
+    <link rel="prev" title="Pytorch Internals" href="pytorch.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -122,8 +125,6 @@
       
       
       
-        
-      
       <div class="bd-sidebar-primary bd-sidebar">
         
 
@@ -180,12 +181,21 @@
             </li>
         </ul>
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Basics</span></p>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="0_test.html">My header</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pytorch.html">Pytorch Internals</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Pytorch Basics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pytorch_internals.html">Pytorch internals</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Two</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">CUDA From Scratch</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Content with notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/start.html">RUN CUDA Files</a></li>
+
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">others</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../others/torch.scatter%26gather.html">torch.scatter_reduce_ and torch.gather</a></li>
 </ul>
 
     </div>
@@ -438,6 +448,9 @@ document.write(`
 <span class="n">rand_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
 <span class="n">ones_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
 <span class="n">zeros_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">full_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;full_tensor:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">full_tensor</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -452,8 +465,11 @@ x_ones:
  tensor([[1, 1],
         [1, 1]])
 x_rand:
- tensor([[0.1382, 0.1019],
-        [0.9801, 0.4899]])
+ tensor([[0.9815, 0.2415],
+        [0.0402, 0.8662]])
+full_tensor:
+ tensor([[-inf, -inf, -inf],
+        [-inf, -inf, -inf]])
 </pre></div>
 </div>
 </div>
@@ -492,6 +508,24 @@ x_rand:
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
+    <a class="left-prev"
+       href="pytorch.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Pytorch Internals</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="pytorch_internals.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Pytorch internals</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
 </div>
                 </footer>
               
