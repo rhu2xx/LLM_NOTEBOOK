@@ -3,8 +3,8 @@ root: intro
 parts:
   - caption: Basics
     chapters:
-      - file: docs/0_basics/0_test
-      - file: docs/0_basics/pytorch
+      # - file: docs/0_basics/0_test
+      # - file: docs/0_basics/pytorch
       - file: docs/0_basics/pytorch_basics
       - file: docs/0_basics/pytorch_internals
 
