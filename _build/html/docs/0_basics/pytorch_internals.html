@@ -184,8 +184,6 @@
         </ul>
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Basics</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="0_test.html">My header</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pytorch.html">Pytorch Internals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pytorch_basics.html">Pytorch Basics</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Pytorch internals</a></li>
 </ul>
@@ -194,6 +192,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/start.html">RUN CUDA Files</a></li>
 
 
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">others</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../others/torch.scatter%26gather.html">torch.scatter_reduce_ and torch.gather</a></li>
 </ul>
 
     </div>
@@ -532,7 +534,7 @@ document.write(`
 </div></blockquote>
 <p>So the update rule in training is:
 $<span class="math notranslate nohighlight">\(
-new\_weight = old\_weight - learning\_rate \times gradient
+new\_weight = old\_weight - learning\_rate \times \frac{\partial loss}{\partial weight}
 \)</span>$</p>
 <section id="forward-pass">
 <h3>Forward Pass<a class="headerlink" href="#forward-pass" title="Link to this heading">#</a></h3>

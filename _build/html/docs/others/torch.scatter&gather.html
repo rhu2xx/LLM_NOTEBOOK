@@ -181,8 +181,6 @@
         </ul>
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Basics</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../0_basics/0_test.html">My header</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../0_basics/pytorch.html">Pytorch Internals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../0_basics/pytorch_basics.html">Pytorch Basics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../0_basics/pytorch_internals.html">Pytorch internals</a></li>
 </ul>
@@ -539,6 +537,25 @@ document.write(`
 
 
 <span class="n">weighted_mean_A_per_group</span> <span class="o">=</span> <span class="n">weighted_sum_A_per_group</span> <span class="o">/</span> <span class="n">weight_sum_per_group</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">head_dim</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">1e-12</span><span class="p">)</span>
+
+<span class="c1">## count the group</span>
+<span class="n">count_per_group</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">group_max</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">group_idx_per_A_idx</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+<span class="n">ones</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">group_idx_per_A_idx</span><span class="p">)</span>
+
+<span class="n">count_per_group</span><span class="o">.</span><span class="n">scatter_reduce_</span><span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="n">group_idx_per_A_idx</span><span class="p">,</span> <span class="n">src</span> <span class="o">=</span> <span class="n">ones</span><span class="p">,</span> <span class="n">reduce</span> <span class="o">=</span> <span class="s1">&#39;sum&#39;</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[[ 8,  3,  1,  4,  4],
+         [ 2,  4,  8,  6,  0],
+         [ 5,  5,  2,  1,  7],
+         [ 7,  5,  5,  2,  1]],
+
+        [[ 8,  4,  4,  2,  2],
+         [ 4,  3,  3,  1,  9],
+         [ 8,  1,  6,  3,  2],
+         [ 1,  4, 11,  3,  1]]])
 </pre></div>
 </div>
 </div>
