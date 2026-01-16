@@ -15,6 +15,7 @@ parts:
   - caption : others
     chapters:
       - file: docs/others/torch.scatter&gather
+      - file: docs/others/coroutine
 
 # Notes:
 # - Use paths without file extensions and refer to notebooks (.ipynb) or markdown (.md) files.
