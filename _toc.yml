@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 format: jb-book
 root: intro
 parts:
@@ -20,3 +21,28 @@ parts:
 # - Use paths without file extensions and refer to notebooks (.ipynb) or markdown (.md) files.
 # - `root: intro` keeps the intro page as the book root (used previously).
 
+=======
+format: jb-book
+root: intro
+parts:
+  - caption: Basics
+    chapters:
+      # - file: docs/0_basics/0_test
+      # - file: docs/0_basics/pytorch
+      - file: docs/0_basics/pytorch_basics
+      - file: docs/0_basics/pytorch_internals
+
+  - caption: CUDA From Scratch
+    chapters:
+      - file: docs/1_cuda_from_scratch/start
+
+  - caption : others
+    chapters:
+      - file: docs/others/torch.scatter&gather
+      - file: docs/others/coroutine
+
+# Notes:
+# - Use paths without file extensions and refer to notebooks (.ipynb) or markdown (.md) files.
+# - `root: intro` keeps the intro page as the book root (used previously).
+
+>>>>>>> 29a51f10ed33b3057f70cd9b1c3e1c4f00d89afe
