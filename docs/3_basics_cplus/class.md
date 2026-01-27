@@ -1,6 +1,7 @@
 # Modern C++
 
 ## 1. The Basic Structure
+
 ```cpp
 class Player {
 private:
@@ -45,6 +46,7 @@ When you define one of the following, you should usually define all three/five:
 
 
 ## Example Usage
+
 ```cpp
 #include <iostream>
 #include <string>
@@ -63,6 +65,12 @@ public:
     }
 
 }
+
+
+int main() {
+    BankAccount account{"John Doe", 1000.0};
+    BankAccount account2 = "Jane Doe"; // Error: cannot convert from 'const char [9]' to 'BankAccount'
+    BankAccount account3("Jane Doe", 1000.0); // OK
+    return 0;
+}
 ```
-
-
