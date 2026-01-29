@@ -2,10 +2,10 @@
 
 
 
-## Lambda Expressions in C++
+##  Lambda Expressions in C++
 A lambda expression is as an anonymous, 'inline' function pointer that can carry its own local variables with it.
 
-### 1. Basic Syntax
+###  1. Basic Syntax
 
 ```cpp
 auto my_lambda = [capture](parameters) -> return_type {
@@ -212,4 +212,56 @@ std::weak_ptr<int> wptr = sptr; // Create a weak_ptr from shared_ptr
 int* sptr = (int*)malloc(sizeof(int));
 *sptr = 30; // Create a pointer
 int* wptr = sptr; // Create a weak reference (no ownership)
+```
+
+## Const functionality
+
+```rust
+#include <iostream>
+#include <string>
+
+class BankAccount {
+private:
+    double balance;      // 余额
+    std::string id;      // 账号
+
+public:
+    BankAccount(std::string name, double b) : id(name), balance(b) {}
+
+    // 1. 函数末尾的 const：【观察者模式】
+    // 这是一个“只读”函数。它承诺：调用我，绝对不会改变账户的任何数据。
+    double getBalance() const {
+        // balance += 10; // 如果在这里修改余额，编译器会直接报错！安全！
+        return balance;
+    }
+
+    // 2. 参数中的 const：【保护输入】
+    // 承诺：我只管读取传入的“转账金额”，绝对不会在函数内部偷偷修改它。
+    void deposit(const double amount) {
+        balance += amount; 
+        // amount = 0; // 错误！不能修改被 const 保护的参数
+    }
+
+    // 3. 返回值为 const 的引用：【最高权限控制】
+    // 既想让你看账号 ID（不产生内存复制），又不准你修改它。
+    const std::string& getId() const {
+        return id;
+    }
+};
+
+// 4. 外部函数参数中的 const：【最常用的场景】
+// 这里的 const 引用非常关键：
+// 它既保证了效率（不复制对象），又保证了安全（函数内不能改动原账户）。
+void printAccountInfo(const BankAccount& account) {
+    std::cout << "ID: " << account.getId() << std::endl;
+    std::cout << "Balance: " << account.getBalance() << std::endl;
+    
+    // account.deposit(100); // 错误！account 是 const 的，只能调用带 const 标记的成员函数
+}
+
+int main() {
+    BankAccount myAcc("User_01", 1000.0);
+    printAccountInfo(myAcc);
+    return 0;
+}
 ```
