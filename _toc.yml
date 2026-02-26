@@ -1,48 +1,38 @@
-<<<<<<< HEAD
 format: jb-book
 root: intro
 parts:
-  - caption: Basics
+  - caption: Python Basics
     chapters:
-      # - file: docs/0_basics/0_test
-      # - file: docs/0_basics/pytorch
-      - file: docs/0_basics/pytorch_basics
-      - file: docs/0_basics/pytorch_internals
+      - file: docs/0_basics_python/0_test
+      - file: docs/0_basics_python/pytorch
+      - file: docs/0_basics_python/pytorch_basics
+      - file: docs/0_basics_python/pytorch_internals
 
   - caption: CUDA From Scratch
     chapters:
       - file: docs/1_cuda_from_scratch/start
+      - file: docs/1_cuda_from_scratch/thread_memory_understanding
+      - file: docs/1_cuda_from_scratch/thrust_tutorial
+      - file: docs/1_cuda_from_scratch/thrust_tutorials
 
-  - caption : others
+  - caption: LLM Cheatsheet
     chapters:
-      - file: docs/others/torch.scatter&gather
+      - file: docs/2_LLM_cheatsheet/NN_Fundamentals
+      - file: docs/2_LLM_cheatsheet/Deep_dive_into_LLMs
 
-# Notes:
-# - Use paths without file extensions and refer to notebooks (.ipynb) or markdown (.md) files.
-# - `root: intro` keeps the intro page as the book root (used previously).
-
-=======
-format: jb-book
-root: intro
-parts:
-  - caption: Basics
+  - caption: C++ Basics
     chapters:
-      # - file: docs/0_basics/0_test
-      # - file: docs/0_basics/pytorch
-      - file: docs/0_basics/pytorch_basics
-      - file: docs/0_basics/pytorch_internals
+      - file: docs/3_basics_cplus/class
+      - file: docs/3_basics_cplus/std_functions
 
-  - caption: CUDA From Scratch
-    chapters:
-      - file: docs/1_cuda_from_scratch/start
-
-  - caption : others
+  - caption: Others
     chapters:
       - file: docs/others/torch.scatter&gather
       - file: docs/others/coroutine
+      - file: docs/others/mpi_tutorial
+      - file: docs/others/causal_discovery
 
 # Notes:
 # - Use paths without file extensions and refer to notebooks (.ipynb) or markdown (.md) files.
 # - `root: intro` keeps the intro page as the book root (used previously).
 
->>>>>>> 29a51f10ed33b3057f70cd9b1c3e1c4f00d89afe
