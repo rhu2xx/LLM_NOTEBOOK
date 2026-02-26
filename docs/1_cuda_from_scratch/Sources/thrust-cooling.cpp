@@ -7,7 +7,6 @@
 int main() {
     float k = 0.5;
     float ambient_temp = 20;
-    //std::vector<float> a{ 42, 24, 50 };
     thrust::universal_vector<float> temp{ 42, 24, 50 };
     auto transformation = [=] __host__ __device__ (float temp) { return temp + k * (ambient_temp - temp); };
 
