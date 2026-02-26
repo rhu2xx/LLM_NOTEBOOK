@@ -61,7 +61,8 @@
     <link rel="icon" href="https://github.com/rhu2xx/picx-images-hosting/raw/master/20251021/cat_eye.4xuxugatot.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="prev" title="RUN CUDA Files" href="../1_cuda_from_scratch/start.html" />
+    <link rel="next" title="Coroutine and thread" href="coroutine.html" />
+    <link rel="prev" title="Random Notes for Modern C++" href="../3_basics_cplus/std_functions.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -179,20 +180,38 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Basics</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Python Basics</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../0_basics/pytorch_basics.html">Pytorch Basics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../0_basics/pytorch_internals.html">Pytorch internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/0_test.html">My header</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch.html">Pytorch Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch_basics.html">Pytorch Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch_internals.html">Pytorch internals</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">CUDA From Scratch</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/start.html">RUN CUDA Files</a></li>
 
 
+<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thread_memory_understanding.html">Cuda Memory Hierarchy and Thread Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorial.html">Thrust Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorials.html">Thrust Tutorials</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">others</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LLM Cheatsheet</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/NN_Fundamentals.html">Neural Network Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html">Depp dive into LLMs</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">C++ Basics</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/class.html">Modern C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/std_functions.html">Random Notes for Modern C++</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Others</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">torch.scatter_reduce_ and torch.gather</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coroutine.html">Coroutine and thread</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpi_tutorial.html">MPI message passing Interface tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="causal_discovery.html">The introduction of Double Machine Learning</a></li>
 </ul>
 
     </div>
@@ -547,15 +566,15 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[[ 3,  6,  2,  8,  1],
-         [ 7,  1,  1,  9,  2],
-         [ 3,  5,  3,  3,  6],
-         [ 1,  9,  3,  6,  1]],
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[[ 4,  5,  0, 10,  1],
+         [ 8,  5,  0,  7,  0],
+         [ 5,  3,  2,  7,  3],
+         [ 4,  0,  2, 10,  4]],
 
-        [[ 2,  0,  5, 11,  2],
-         [ 8,  0,  5,  2,  5],
-         [ 4,  4,  1,  5,  6],
-         [ 3, 11,  0,  5,  1]]])
+        [[ 2, 12,  2,  4,  0],
+         [ 0,  6,  7,  5,  2],
+         [ 3,  5,  1,  9,  2],
+         [ 7,  6,  1,  4,  2]]])
 </pre></div>
 </div>
 </div>
@@ -594,13 +613,22 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../1_cuda_from_scratch/start.html"
+       href="../3_basics_cplus/std_functions.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">RUN CUDA Files</p>
+        <p class="prev-next-title">Random Notes for Modern C++</p>
       </div>
+    </a>
+    <a class="right-next"
+       href="coroutine.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Coroutine and thread</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>

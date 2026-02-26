@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Neural Network Fundamentals &#8212; My LLM Notebook</title>
+    <title>Modern C++ &#8212; My LLM Notebook</title>
   
   
   
@@ -57,12 +57,12 @@
     <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/2_LLM_cheatsheet/NN_Fundamentals';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/3_basics_cplus/class';</script>
     <link rel="icon" href="https://github.com/rhu2xx/picx-images-hosting/raw/master/20251021/cat_eye.4xuxugatot.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Depp dive into LLMs" href="Deep_dive_into_LLMs.html" />
-    <link rel="prev" title="Thrust Tutorials" href="../1_cuda_from_scratch/thrust_tutorials.html" />
+    <link rel="next" title="Random Notes for Modern C++" href="std_functions.html" />
+    <link rel="prev" title="Depp dive into LLMs" href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -197,14 +197,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorials.html">Thrust Tutorials</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">LLM Cheatsheet</span></p>
-<ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Neural Network Fundamentals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Deep_dive_into_LLMs.html">Depp dive into LLMs</a></li>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/NN_Fundamentals.html">Neural Network Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html">Depp dive into LLMs</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">C++ Basics</span></p>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/class.html">Modern C++</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/std_functions.html">Random Notes for Modern C++</a></li>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Modern C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="std_functions.html">Random Notes for Modern C++</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Others</span></p>
 <ul class="nav bd-sidenav">
@@ -283,7 +283,7 @@
       
       
       
-      <li><a href="https://github.com/rhu2xx/LLM_NOTEBOOK/issues/new?title=Issue%20on%20page%20%2Fdocs/2_LLM_cheatsheet/NN_Fundamentals.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/rhu2xx/LLM_NOTEBOOK/issues/new?title=Issue%20on%20page%20%2Fdocs/3_basics_cplus/class.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -313,7 +313,7 @@
       
       
       
-      <li><a href="../../_sources/docs/2_LLM_cheatsheet/NN_Fundamentals.ipynb" target="_blank"
+      <li><a href="../../_sources/docs/3_basics_cplus/class.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -323,7 +323,7 @@
 <span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="btn__text-container">.ipynb</span>
+<span class="btn__text-container">.md</span>
 </a>
 </li>
       
@@ -397,7 +397,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Neural Network Fundamentals</h1>
+    <h1>Modern C++</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -407,7 +407,11 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-nn-components">Basic NN Components</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-basic-structure">1. The Basic Structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-rule-of-three-five-zero">2. The rule of Three/Five/Zero</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#access-modifiers">3. Access Modifiers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modern-keywords-to-remember">4. Modern Keywords to Remember</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-usage">Example Usage</a></li>
 </ul>
             </nav>
         </div>
@@ -419,61 +423,77 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="neural-network-fundamentals">
-<h1>Neural Network Fundamentals<a class="headerlink" href="#neural-network-fundamentals" title="Link to this heading">#</a></h1>
-<section id="basic-nn-components">
-<h2>Basic NN Components<a class="headerlink" href="#basic-nn-components" title="Link to this heading">#</a></h2>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+  <section class="tex2jax_ignore mathjax_ignore" id="modern-c">
+<h1>Modern C++<a class="headerlink" href="#modern-c" title="Link to this heading">#</a></h1>
+<section id="the-basic-structure">
+<h2>1. The Basic Structure<a class="headerlink" href="#the-basic-structure" title="Link to this heading">#</a></h2>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Player</span><span class="w"> </span><span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">;</span><span class="w"> </span><span class="c1">// Member variable</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">health</span><span class="p">{</span><span class="mi">100</span><span class="p">};</span><span class="w">  </span><span class="c1">// Default member initializer (Modern C++)</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">LinearLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span><span class="o">*</span><span class="mf">0.01</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_dim</span><span class="p">))</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="c1">// Constructor</span>
+<span class="w">    </span><span class="n">Player</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">name</span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">n</span><span class="p">)}</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span>
-    
-
-<span class="k">def</span><span class="w"> </span><span class="nf">gelu</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    gaussian error linear unit</span>
-<span class="sd">    use torch.nn.GELU() or torch.nn.functional.gelu(x) in production</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mf">0.044715</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">3</span><span class="p">))))</span>
+<span class="w">    </span><span class="c1">// Method (const means it doesn&#39;t modify the object)</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">print_status</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; has &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">health</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; HP.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
 </pre></div>
 </div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</section>
+<section id="the-rule-of-three-five-zero">
+<h2>2. The rule of Three/Five/Zero<a class="headerlink" href="#the-rule-of-three-five-zero" title="Link to this heading">#</a></h2>
+<p>When you define one of the following, you should usually define all three/five:</p>
+<ul class="simple">
+<li><p>Destructor <code class="docutils literal notranslate"><span class="pre">~ClassName()</span></code></p></li>
+<li><p>Copy Constructor <code class="docutils literal notranslate"><span class="pre">ClassName(const</span> <span class="pre">ClassName</span> <span class="pre">&amp;other)</span></code></p></li>
+<li><p>Copy Assignment Operator <code class="docutils literal notranslate"><span class="pre">ClassName&amp;</span> <span class="pre">operator=(const</span> <span class="pre">ClassName</span> <span class="pre">&amp;other)</span></code></p></li>
+<li><p>Move Constructor (C++11) <code class="docutils literal notranslate"><span class="pre">ClassName(ClassName</span> <span class="pre">&amp;&amp;other)</span> <span class="pre">noexcept</span></code></p></li>
+<li><p>Move Assignment Operator (C++11) <code class="docutils literal notranslate"><span class="pre">ClassName&amp;</span> <span class="pre">operator=(ClassName</span> <span class="pre">&amp;&amp;other)</span></code></p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">Constructor</span></code> use the member initializer list (<code class="docutils literal notranslate"><span class="pre">:name{n}</span></code>)</p>
+</section>
+<section id="access-modifiers">
+<h2>3. Access Modifiers<a class="headerlink" href="#access-modifiers" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">public</span></code>: Accessible from anywhere.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">private</span></code>: Accessible only within the class.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">protected</span></code>: Accessible within the class and its derived classes.</p></li>
+</ul>
+</section>
+<section id="modern-keywords-to-remember">
+<h2>4. Modern Keywords to Remember<a class="headerlink" href="#modern-keywords-to-remember" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">auto</span></code>: Let the compiler deduce types.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nullptr</span></code>: Always use this instead of NULL or 0.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">override</span></code>: Explicitly tell the compiler you are overriding a virtual function.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">final</span></code>: Prevent a class from being inherited or a method from being overridden.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">default</span></code> / <code class="docutils literal notranslate"><span class="pre">delete</span></code>: Tell the compiler to create a default version of a function or explicitly forbid it (e.g., <code class="docutils literal notranslate"><span class="pre">Player(const</span> <span class="pre">Player&amp;)</span> <span class="pre">=</span> <span class="pre">delete;</span></code> makes a class non-copyable).</p></li>
+</ul>
+</section>
+<section id="example-usage">
+<h2>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading">#</a></h2>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
 
+<span class="k">class</span><span class="w"> </span><span class="nc">BankAccount</span><span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">owner</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">balance</span><span class="p">{</span><span class="mf">0.0</span><span class="p">};</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
 
+<span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="c1">// `explicit`: Only use it if the programmer explicitly asks for it.`</span>
+<span class="w">    </span><span class="k">explicit</span><span class="w"> </span><span class="n">BankAccount</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">initial_deposit</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="n">owner</span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">name</span><span class="p">)},</span><span class="w"> </span><span class="n">balance</span><span class="p">{</span><span class="n">initial_deposit</span><span class="p">}</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="s">&quot;Account created for &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">owner</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
 
-<span class="c1"># ensure x and y are tensors / numpy for plotting</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">gelu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
-
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">y</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;GELU activation&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;gelu(x)&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="p">}</span>
 </pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../../_images/cca57fb269e54bd38964975860e0e91c853e198970f83c59ab9bda0c3af87cde.png" src="../../_images/cca57fb269e54bd38964975860e0e91c853e198970f83c59ab9bda0c3af87cde.png" />
-</div>
 </div>
 </section>
 </section>
@@ -491,7 +511,7 @@ document.write(`
         },
         kernelOptions: {
             name: "python3",
-            path: "./docs/2_LLM_cheatsheet"
+            path: "./docs/3_basics_cplus"
         },
         predefinedOutput: true
     }
@@ -509,20 +529,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../1_cuda_from_scratch/thrust_tutorials.html"
+       href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Thrust Tutorials</p>
+        <p class="prev-next-title">Depp dive into LLMs</p>
       </div>
     </a>
     <a class="right-next"
-       href="Deep_dive_into_LLMs.html"
+       href="std_functions.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Depp dive into LLMs</p>
+        <p class="prev-next-title">Random Notes for Modern C++</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -542,7 +562,11 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-nn-components">Basic NN Components</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-basic-structure">1. The Basic Structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-rule-of-three-five-zero">2. The rule of Three/Five/Zero</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#access-modifiers">3. Access Modifiers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modern-keywords-to-remember">4. Modern Keywords to Remember</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-usage">Example Usage</a></li>
 </ul>
   </nav></div>
 

@@ -61,6 +61,8 @@
     <link rel="icon" href="https://github.com/rhu2xx/picx-images-hosting/raw/master/20251021/cat_eye.4xuxugatot.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="MPI message passing Interface tutorial" href="mpi_tutorial.html" />
+    <link rel="prev" title="torch.scatter_reduce_ and torch.gather" href="torch.scatter%26gather.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -123,8 +125,6 @@
       
       
       
-        
-      
       <div class="bd-sidebar-primary bd-sidebar">
         
 
@@ -180,20 +180,38 @@
                 </a>
             </li>
         </ul>
-        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Basics</span></p>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Python Basics</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../0_basics/pytorch_basics.html">Pytorch Basics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../0_basics/pytorch_internals.html">Pytorch internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/0_test.html">My header</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch.html">Pytorch Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch_basics.html">Pytorch Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch_internals.html">Pytorch internals</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">CUDA From Scratch</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/start.html">RUN CUDA Files</a></li>
 
 
+<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thread_memory_understanding.html">Cuda Memory Hierarchy and Thread Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorial.html">Thrust Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorials.html">Thrust Tutorials</a></li>
 </ul>
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">others</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LLM Cheatsheet</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/NN_Fundamentals.html">Neural Network Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html">Depp dive into LLMs</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">C++ Basics</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/class.html">Modern C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/std_functions.html">Random Notes for Modern C++</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Others</span></p>
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="torch.scatter%26gather.html">torch.scatter_reduce_ and torch.gather</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Coroutine and thread</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpi_tutorial.html">MPI message passing Interface tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="causal_discovery.html">The introduction of Double Machine Learning</a></li>
 </ul>
 
     </div>
@@ -366,7 +384,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -382,6 +402,19 @@ document.write(`
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#must-know-concept">Must-know concept</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#demo-two-jobs-are-interleavedly-executed">demo: two jobs are interleavedly executed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#demo-without-await">demo: without <code class="docutils literal notranslate"><span class="pre">await</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#demo-two-threads">demo: two threads</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -393,7 +426,162 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="coroutine-and-thread">
 <h1>Coroutine and thread<a class="headerlink" href="#coroutine-and-thread" title="Link to this heading">#</a></h1>
-<p>test</p>
+<section id="must-know-concept">
+<h2>Must-know concept<a class="headerlink" href="#must-know-concept" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Control flow: the order in which individual statements, instructions or function calls are executed or evaluated in a program.</p></li>
+<li><p>Process:</p>
+<ul>
+<li><p>An instance of a computer program that is being executed.</p></li>
+<li><p>It contains the program code and its current activity. When launching a program, the operating system creates a process for it.</p></li>
+<li><p>A process has one control flow. When launching multiple threads within a process, the control flow can be multiple.</p></li>
+</ul>
+</li>
+<li><p>Thread:</p>
+<ul>
+<li><p>the smallest sequence of programmed instructions that can be managed independently by a scheduler.</p></li>
+<li><p>A process can contain multiple threads that share the same memory space.</p></li>
+<li><p>One control flow per thread.</p></li>
+</ul>
+</li>
+<li><p>Coroutine:</p>
+<ul>
+<li><p>a control flow that can span multiple function calls and is cooperatively scheduled within a single thread.</p></li>
+<li><p>take the control flow rotationly by explicitly yielding control back to the caller.</p></li>
+</ul>
+</li>
+</ul>
+<p>When do we need coroutine?
+In the execution, if we encounter an operation that “waits” for a long time, such as I/O operation, network operation, etc., and during this waiting time, the CPU is idle.</p>
+<section id="demo-two-jobs-are-interleavedly-executed">
+<h3>demo: two jobs are interleavedly executed<a class="headerlink" href="#demo-two-jobs-are-interleavedly-executed" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">task_a</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;A: step 1&quot;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># ← coroutine yields control</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;A: step 2&quot;</span><span class="p">)</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">task_b</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;B: step 1&quot;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># ← coroutine yields control</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;B: step 2&quot;</span><span class="p">)</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+        <span class="n">task_a</span><span class="p">(),</span>
+        <span class="n">task_b</span><span class="p">()</span>
+    <span class="p">)</span>
+
+<span class="c1">#  asyncio.run() cannot be used in a Jupyter notebook because the kernel already runs an event loop. </span>
+<span class="c1"># asyncio.run(main()) --&gt; await main()</span>
+<span class="k">await</span> <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>A: step 1
+B: step 1
+A: step 2
+B: step 2
+A: step 2
+B: step 2
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="demo-without-await">
+<h3>demo: without <code class="docutils literal notranslate"><span class="pre">await</span></code><a class="headerlink" href="#demo-without-await" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">bas_task</span></code> occupies the control flow and does not yield it, so <code class="docutils literal notranslate"><span class="pre">good_task</span></code> has to wait until <code class="docutils literal notranslate"><span class="pre">bas_task</span></code> is completed.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">bad_task</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;bad start&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="mi">8</span><span class="p">):</span>
+        <span class="k">pass</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;bad end&quot;</span><span class="p">)</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">good_task</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;good start&quot;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;good end&quot;</span><span class="p">)</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+        <span class="n">bad_task</span><span class="p">(),</span>
+        <span class="n">good_task</span><span class="p">()</span>
+    <span class="p">)</span>
+
+<span class="k">await</span> <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>bad start
+bad end
+good start
+bad end
+good start
+good end
+good end
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="demo-two-threads">
+<h3>demo: two threads<a class="headerlink" href="#demo-two-threads" title="Link to this heading">#</a></h3>
+<p>In multi-threading, the execution order of threads and the output order is out of control of the programmer.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">task</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">)</span>
+
+<span class="n">t1</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,))</span>
+<span class="n">t2</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,))</span>
+
+<span class="n">t1</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="n">t2</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="n">t1</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+<span class="n">t2</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>AB start
+ start
+B end
+A end
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>wsl<span class="w"> </span>ls<span class="w"> </span>-l
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>total 8
+-rwxrwxrwx 1 huhu huhu 4328 Apr 20  2023 cuda-keyring_1.1-1_all.deb
+-rwxrwxrwx 1 huhu huhu  286 Jan 16 16:18 hello.cu
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
 </section>
 
     <script type="text/x-thebe-config">
@@ -426,12 +614,50 @@ document.write(`
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
+    <a class="left-prev"
+       href="torch.scatter%26gather.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">torch.scatter_reduce_ and torch.gather</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="mpi_tutorial.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">MPI message passing Interface tutorial</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
 </div>
                 </footer>
               
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#must-know-concept">Must-know concept</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#demo-two-jobs-are-interleavedly-executed">demo: two jobs are interleavedly executed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#demo-without-await">demo: without <code class="docutils literal notranslate"><span class="pre">await</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#demo-two-threads">demo: two threads</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>
