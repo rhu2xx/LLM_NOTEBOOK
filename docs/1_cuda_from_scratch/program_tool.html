@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Modern C++ &#8212; My LLM Notebook</title>
+    <title>Record Time &#8212; My LLM Notebook</title>
   
   
   
@@ -57,12 +57,10 @@
     <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/3_basics_cplus/class';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/1_cuda_from_scratch/program_tool';</script>
     <link rel="icon" href="https://github.com/rhu2xx/picx-images-hosting/raw/master/20251021/cat_eye.4xuxugatot.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Random Notes for Modern C++" href="std_functions.html" />
-    <link rel="prev" title="Depp dive into LLMs" href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -124,6 +122,8 @@
     <div class="bd-container__inner bd-page-width">
       
       
+      
+        
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -189,9 +189,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">CUDA From Scratch</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thread_memory_understanding.html">Cuda Memory Hierarchy and Thread Management</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorial.html">Thrust Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorials.html">Thrust Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thread_memory_understanding.html">Cuda Memory Hierarchy and Thread Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thrust_tutorial.html">Thrust Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thrust_tutorials.html">Thrust Tutorials</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">LLM Cheatsheet</span></p>
 <ul class="nav bd-sidenav">
@@ -199,9 +199,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html">Depp dive into LLMs</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">C++ Basics</span></p>
-<ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Modern C++</a></li>
-<li class="toctree-l1"><a class="reference internal" href="std_functions.html">Random Notes for Modern C++</a></li>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/class.html">Modern C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/std_functions.html">Random Notes for Modern C++</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Others</span></p>
 <ul class="nav bd-sidenav">
@@ -280,7 +280,7 @@
       
       
       
-      <li><a href="https://github.com/rhu2xx/LLM_NOTEBOOK/issues/new?title=Issue%20on%20page%20%2Fdocs/3_basics_cplus/class.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/rhu2xx/LLM_NOTEBOOK/issues/new?title=Issue%20on%20page%20%2Fdocs/1_cuda_from_scratch/program_tool.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -310,7 +310,7 @@
       
       
       
-      <li><a href="../../_sources/docs/3_basics_cplus/class.md" target="_blank"
+      <li><a href="../../_sources/docs/1_cuda_from_scratch/program_tool.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -394,7 +394,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Modern C++</h1>
+    <h1>Record Time</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -404,12 +404,11 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-basic-structure">1. The Basic Structure</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-rule-of-three-five-zero">2. The rule of Three/Five/Zero</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#access-modifiers">3. Access Modifiers</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modern-keywords-to-remember">4. Modern Keywords to Remember</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-usage">Example Usage</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Record Time</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#record-throughput">Record throughput</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#get-the-device-properties">Get the device properties</a></li>
 </ul>
+
             </nav>
         </div>
     </div>
@@ -420,87 +419,39 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="modern-c">
-<h1>Modern C++<a class="headerlink" href="#modern-c" title="Link to this heading">#</a></h1>
-<section id="the-basic-structure">
-<h2>1. The Basic Structure<a class="headerlink" href="#the-basic-structure" title="Link to this heading">#</a></h2>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Player</span><span class="w"> </span><span class="p">{</span>
-<span class="k">private</span><span class="o">:</span>
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">;</span><span class="w"> </span><span class="c1">// Member variable</span>
-<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">health</span><span class="p">{</span><span class="mi">100</span><span class="p">};</span><span class="w">  </span><span class="c1">// Default member initializer (Modern C++)</span>
+  <section id="record-time">
+<h1>Record Time<a class="headerlink" href="#record-time" title="Link to this heading">#</a></h1>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;chrono&gt;</span>
 
-<span class="k">public</span><span class="o">:</span>
-<span class="w">    </span><span class="c1">// Constructor</span>
-<span class="w">    </span><span class="n">Player</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">name</span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">n</span><span class="p">)}</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span>
-
-<span class="w">    </span><span class="c1">// Method (const means it doesn&#39;t modify the object)</span>
-<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">print_status</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; has &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">health</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; HP.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="p">};</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">high_resolution_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="o">****************</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">high_resolution_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">seconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">).</span><span class="n">count</span><span class="p">();</span>
 </pre></div>
 </div>
 </section>
-<section id="the-rule-of-three-five-zero">
-<h2>2. The rule of Three/Five/Zero<a class="headerlink" href="#the-rule-of-three-five-zero" title="Link to this heading">#</a></h2>
-<p>When you define one of the following, you should usually define all three/five:</p>
-<ul class="simple">
-<li><p>Destructor <code class="docutils literal notranslate"><span class="pre">~ClassName()</span></code></p></li>
-<li><p>Copy Constructor <code class="docutils literal notranslate"><span class="pre">ClassName(const</span> <span class="pre">ClassName</span> <span class="pre">&amp;other)</span></code></p></li>
-<li><p>Copy Assignment Operator <code class="docutils literal notranslate"><span class="pre">ClassName&amp;</span> <span class="pre">operator=(const</span> <span class="pre">ClassName</span> <span class="pre">&amp;other)</span></code></p></li>
-<li><p>Move Constructor (C++11) <code class="docutils literal notranslate"><span class="pre">ClassName(ClassName</span> <span class="pre">&amp;&amp;other)</span> <span class="pre">noexcept</span></code></p></li>
-<li><p>Move Assignment Operator (C++11) <code class="docutils literal notranslate"><span class="pre">ClassName&amp;</span> <span class="pre">operator=(ClassName</span> <span class="pre">&amp;&amp;other)</span></code></p></li>
-</ul>
-<p><code class="docutils literal notranslate"><span class="pre">Constructor</span></code> use the member initializer list (<code class="docutils literal notranslate"><span class="pre">:name{n}</span></code>)</p>
-</section>
-<section id="access-modifiers">
-<h2>3. Access Modifiers<a class="headerlink" href="#access-modifiers" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">public</span></code>: Accessible from anywhere.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">private</span></code>: Accessible only within the class.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">protected</span></code>: Accessible within the class and its derived classes.</p></li>
-</ul>
-</section>
-<section id="modern-keywords-to-remember">
-<h2>4. Modern Keywords to Remember<a class="headerlink" href="#modern-keywords-to-remember" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">auto</span></code>: Let the compiler deduce types.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">nullptr</span></code>: Always use this instead of NULL or 0.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">override</span></code>: Explicitly tell the compiler you are overriding a virtual function.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">final</span></code>: Prevent a class from being inherited or a method from being overridden.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">default</span></code> / <code class="docutils literal notranslate"><span class="pre">delete</span></code>: Tell the compiler to create a default version of a function or explicitly forbid it (e.g., <code class="docutils literal notranslate"><span class="pre">Player(const</span> <span class="pre">Player&amp;)</span> <span class="pre">=</span> <span class="pre">delete;</span></code> makes a class non-copyable).</p></li>
-</ul>
-</section>
-<section id="example-usage">
-<h2>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading">#</a></h2>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
-
-<span class="k">class</span><span class="w"> </span><span class="nc">BankAccount</span><span class="p">{</span>
-<span class="k">private</span><span class="o">:</span>
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">owner</span><span class="p">;</span>
-<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">balance</span><span class="p">{</span><span class="mf">0.0</span><span class="p">};</span>
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
-
-<span class="k">public</span><span class="o">:</span>
-<span class="w">    </span><span class="c1">// `explicit`: Only use it if the programmer explicitly asks for it.`</span>
-<span class="w">    </span><span class="k">explicit</span><span class="w"> </span><span class="n">BankAccount</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">initial_deposit</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="n">owner</span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">name</span><span class="p">)},</span><span class="w"> </span><span class="n">balance</span><span class="p">{</span><span class="n">initial_deposit</span><span class="p">}</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="s">&quot;Account created for &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">owner</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="p">}</span>
-
-
-<span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">BankAccount</span><span class="w"> </span><span class="n">account</span><span class="p">{</span><span class="s">&quot;John Doe&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">1000.0</span><span class="p">};</span>
-<span class="w">    </span><span class="n">BankAccount</span><span class="w"> </span><span class="n">account2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Jane Doe&quot;</span><span class="p">;</span><span class="w"> </span><span class="c1">// Error: cannot convert from &#39;const char [9]&#39; to &#39;BankAccount&#39;</span>
-<span class="w">    </span><span class="n">BankAccount</span><span class="w"> </span><span class="n">account3</span><span class="p">(</span><span class="s">&quot;Jane Doe&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">1000.0</span><span class="p">);</span><span class="w"> </span><span class="c1">// OK</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
+<section id="record-throughput">
+<h1>Record throughput<a class="headerlink" href="#record-throughput" title="Link to this heading">#</a></h1>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">double</span><span class="w"> </span><span class="n">gigabytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">static_cast</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">temp</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sizeof</span><span class="p">(</span><span class="n">float</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="p">;</span>
+<span class="k">const</span><span class="w"> </span><span class="n">double</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gigabytes</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">seconds</span><span class="p">;</span>
 </pre></div>
 </div>
 </section>
+<section id="get-the-device-properties">
+<h1>Get the device properties<a class="headerlink" href="#get-the-device-properties" title="Link to this heading">#</a></h1>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">double</span><span class="w"> </span><span class="n">max_bandwidth</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">cudaDeviceProp</span><span class="w"> </span><span class="n">prop</span><span class="p">;</span>
+<span class="w">    </span><span class="n">cudaGetDeviceProperties</span><span class="p">(</span><span class="o">&amp;</span><span class="n">prop</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">size_t</span><span class="w"> </span><span class="n">mem_freq</span><span class="w"> </span><span class="o">=</span>
+<span class="w">        </span><span class="n">static_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">prop</span><span class="p">.</span><span class="n">memoryClockRate</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span><span class="w"> </span><span class="c1">// kHz -&gt; Hz</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">int</span><span class="w"> </span><span class="n">bus_width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">prop</span><span class="p">.</span><span class="n">memoryBusWidth</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">size_t</span><span class="w"> </span><span class="n">bytes_per_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mem_freq</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">bus_width</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">CHAR_BIT</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">static_cast</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">bytes_per_second</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">/</span>
+<span class="w">            </span><span class="mi">1024</span><span class="p">;</span><span class="w"> </span><span class="c1">// B/s -&gt; GB/s</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </section>
 
     <script type="text/x-thebe-config">
@@ -516,7 +467,7 @@ document.write(`
         },
         kernelOptions: {
             name: "python3",
-            path: "./docs/3_basics_cplus"
+            path: "./docs/1_cuda_from_scratch"
         },
         predefinedOutput: true
     }
@@ -533,24 +484,6 @@ document.write(`
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
-    <a class="left-prev"
-       href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html"
-       title="previous page">
-      <i class="fa-solid fa-angle-left"></i>
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Depp dive into LLMs</p>
-      </div>
-    </a>
-    <a class="right-next"
-       href="std_functions.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Random Notes for Modern C++</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
-    </a>
 </div>
                 </footer>
               
@@ -567,12 +500,11 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-basic-structure">1. The Basic Structure</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-rule-of-three-five-zero">2. The rule of Three/Five/Zero</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#access-modifiers">3. Access Modifiers</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modern-keywords-to-remember">4. Modern Keywords to Remember</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-usage">Example Usage</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Record Time</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#record-throughput">Record throughput</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#get-the-device-properties">Get the device properties</a></li>
 </ul>
+
   </nav></div>
 
 </div></div>

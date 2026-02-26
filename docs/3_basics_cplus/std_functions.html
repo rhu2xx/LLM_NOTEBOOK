@@ -189,9 +189,6 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">CUDA From Scratch</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/start.html">RUN CUDA Files</a></li>
-
-
 <li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thread_memory_understanding.html">Cuda Memory Hierarchy and Thread Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorial.html">Thrust Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../1_cuda_from_scratch/thrust_tutorials.html">Thrust Tutorials</a></li>
@@ -414,6 +411,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#capture-by-reference">Capture by Reference (&amp;)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#capture-by-value">Capture by Value (=)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#capture-by-value-with-mutable">Capture by Value with <code class="docutils literal notranslate"><span class="pre">mutable</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#puzzle-lambda-expression-as-a-member-function">Puzzle lambda expression as a member function</a></li>
 </ul>
 </li>
 </ul>
@@ -423,11 +421,13 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-copy"><code class="docutils literal notranslate"><span class="pre">std::copy</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-swap"><code class="docutils literal notranslate"><span class="pre">std::swap</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-transform"><code class="docutils literal notranslate"><span class="pre">std::transform</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-reduce"><code class="docutils literal notranslate"><span class="pre">std::reduce</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-unique-ptr"><code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-shared-ptr"><code class="docutils literal notranslate"><span class="pre">std::shared_ptr</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-weak-ptr"><code class="docutils literal notranslate"><span class="pre">std::weak_ptr</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#const-functionality">Const functionality</a></li>
 </ul>
             </nav>
         </div>
@@ -505,6 +505,23 @@ document.write(`
 </pre></div>
 </div>
 </section>
+<section id="puzzle-lambda-expression-as-a-member-function">
+<h4>Puzzle lambda expression as a member function<a class="headerlink" href="#puzzle-lambda-expression-as-a-member-function" title="Link to this heading">#</a></h4>
+<p>The following code snippet actually didn’t capture anything. You may confuse why it can access <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code> without capturing them. The reason is that the lambda is defined inside a member function, so it has access to the member variables of the class. So it just hide the <code class="docutils literal notranslate"><span class="pre">this</span></code> pointer.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">zip_iterator</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">a</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">b</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="k">operator</span><span class="p">[](</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]};</span>
+<span class="w">        </span><span class="c1">// Real: return {this-&gt;a[i], this-&gt;b[i]};</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
 </section>
 </section>
 <section id="explain-the-std-functions-by-c">
@@ -568,6 +585,30 @@ document.write(`
 </pre></div>
 </div>
 </section>
+<section id="std-reduce">
+<h3><code class="docutils literal notranslate"><span class="pre">std::reduce</span></code><a class="headerlink" href="#std-reduce" title="Link to this heading">#</a></h3>
+<p>Header file: <code class="docutils literal notranslate"><span class="pre">&lt;numeric&gt;</span></code>
+Combines elements in a range using a binary operation, producing a single result.
+Operations are listed in the following:</p>
+<ul class="simple">
+<li><p>Sum (default)</p></li>
+<li><p>Product (using <code class="docutils literal notranslate"><span class="pre">std::multiplies&lt;T&gt;{}</span></code>)</p></li>
+<li><p>Minimum (using lambda expression<code class="docutils literal notranslate"><span class="pre">[](int</span> <span class="pre">a,</span> <span class="pre">int</span> <span class="pre">b){</span> <span class="pre">return</span> <span class="pre">std::min(a,</span> <span class="pre">b);</span> <span class="pre">}</span></code>)</p></li>
+</ul>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">std::multiplies&lt;int&gt;{}</span></code> works but <code class="docutils literal notranslate"><span class="pre">std::max&lt;int&gt;{}</span></code> doesn’t because one is a functor class, the other is a function template.
+From <code class="docutils literal notranslate"><span class="pre">&lt;functional&gt;</span> </code>you get:
+<code class="docutils literal notranslate"><span class="pre">std::plus&lt;T&gt;{},</span> <span class="pre">std::minus&lt;T&gt;{},</span> <span class="pre">std::multiplies&lt;T&gt;{},</span> <span class="pre">std::divides&lt;T&gt;{}</span> <span class="pre">std::equal_to&lt;T&gt;{},</span> <span class="pre">std::not_equal_to&lt;T&gt;{},</span> <span class="pre">std::less&lt;T&gt;{},</span> <span class="pre">std::greater&lt;T&gt;{}</span></code>
+No <code class="docutils literal notranslate"><span class="pre">std::max&lt;T&gt;</span></code> functor exists because <code class="docutils literal notranslate"><span class="pre">std::max(a,b)</span></code> returns a reference to the larger argument, while functors need to return by value for reduction algorithms.</p>
+</div></blockquote>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">};</span>
+<span class="c1">//sum</span>
+<span class="n">std</span><span class="o">::</span><span class="n">reduce</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span><span class="w"> </span><span class="c1">// Returns 25 (10 + sum of elements)</span>
+<span class="c1">//product</span>
+<span class="n">std</span><span class="o">::</span><span class="n">reduce</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">multiplies</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">{});</span><span class="w"> </span><span class="c1">// Returns 120 (product of elements)</span>
+</pre></div>
+</div>
+</section>
 <section id="std-unique-ptr">
 <h3><code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code><a class="headerlink" href="#std-unique-ptr" title="Link to this heading">#</a></h3>
 <p>A smart pointer that owns and manages another object through a pointer and disposes of that object when the <code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code> goes out of scope.</p>
@@ -608,6 +649,58 @@ document.write(`
 </pre></div>
 </div>
 </section>
+</section>
+<section id="const-functionality">
+<h2>Const functionality<a class="headerlink" href="#const-functionality" title="Link to this heading">#</a></h2>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="p">#</span><span class="n">include</span><span class="w"> </span><span class="o">&lt;</span><span class="n">iostream</span><span class="o">&gt;</span>
+<span class="p">#</span><span class="n">include</span><span class="w"> </span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span>
+
+<span class="n">class</span><span class="w"> </span><span class="n">BankAccount</span><span class="w"> </span><span class="p">{</span>
+<span class="n">private</span><span class="p">:</span>
+<span class="w">    </span><span class="nc">double</span><span class="w"> </span><span class="n">balance</span><span class="p">;</span><span class="w">      </span><span class="c1">// 余额</span>
+<span class="w">    </span><span class="n">std</span><span class="p">::</span><span class="n">string</span><span class="w"> </span><span class="n">id</span><span class="p">;</span><span class="w">      </span><span class="c1">// 账号</span>
+
+<span class="n">public</span><span class="p">:</span>
+<span class="w">    </span><span class="nc">BankAccount</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">double</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nc">id</span><span class="p">(</span><span class="n">name</span><span class="p">),</span><span class="w"> </span><span class="n">balance</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="c1">// 1. 函数末尾的 const：【观察者模式】</span>
+<span class="w">    </span><span class="c1">// 这是一个“只读”函数。它承诺：调用我，绝对不会改变账户的任何数据。</span>
+<span class="w">    </span><span class="n">double</span><span class="w"> </span><span class="n">getBalance</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// balance += 10; // 如果在这里修改余额，编译器会直接报错！安全！</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">balance</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 2. 参数中的 const：【保护输入】</span>
+<span class="w">    </span><span class="c1">// 承诺：我只管读取传入的“转账金额”，绝对不会在函数内部偷偷修改它。</span>
+<span class="w">    </span><span class="n">void</span><span class="w"> </span><span class="n">deposit</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">double</span><span class="w"> </span><span class="n">amount</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">balance</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">amount</span><span class="p">;</span><span class="w"> </span>
+<span class="w">        </span><span class="c1">// amount = 0; // 错误！不能修改被 const 保护的参数</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 3. 返回值为 const 的引用：【最高权限控制】</span>
+<span class="w">    </span><span class="c1">// 既想让你看账号 ID（不产生内存复制），又不准你修改它。</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">getId</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// 4. 外部函数参数中的 const：【最常用的场景】</span>
+<span class="c1">// 这里的 const 引用非常关键：</span>
+<span class="c1">// 它既保证了效率（不复制对象），又保证了安全（函数内不能改动原账户）。</span>
+<span class="n">void</span><span class="w"> </span><span class="n">printAccountInfo</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">BankAccount</span><span class="o">&amp;</span><span class="w"> </span><span class="n">account</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;ID: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">account</span><span class="p">.</span><span class="n">getId</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Balance: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">account</span><span class="p">.</span><span class="n">getBalance</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="c1">// account.deposit(100); // 错误！account 是 const 的，只能调用带 const 标记的成员函数</span>
+<span class="p">}</span>
+
+<span class="n">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">BankAccount</span><span class="w"> </span><span class="n">myAcc</span><span class="p">(</span><span class="s">&quot;User_01&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">1000.0</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printAccountInfo</span><span class="p">(</span><span class="n">myAcc</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </section>
 </section>
 
@@ -682,6 +775,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#capture-by-reference">Capture by Reference (&amp;)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#capture-by-value">Capture by Value (=)</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#capture-by-value-with-mutable">Capture by Value with <code class="docutils literal notranslate"><span class="pre">mutable</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#puzzle-lambda-expression-as-a-member-function">Puzzle lambda expression as a member function</a></li>
 </ul>
 </li>
 </ul>
@@ -691,11 +785,13 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-copy"><code class="docutils literal notranslate"><span class="pre">std::copy</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-swap"><code class="docutils literal notranslate"><span class="pre">std::swap</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-transform"><code class="docutils literal notranslate"><span class="pre">std::transform</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-reduce"><code class="docutils literal notranslate"><span class="pre">std::reduce</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-unique-ptr"><code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-shared-ptr"><code class="docutils literal notranslate"><span class="pre">std::shared_ptr</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#std-weak-ptr"><code class="docutils literal notranslate"><span class="pre">std::weak_ptr</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#const-functionality">Const functionality</a></li>
 </ul>
   </nav></div>
 

@@ -189,9 +189,6 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">CUDA From Scratch</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="start.html">RUN CUDA Files</a></li>
-
-
 <li class="toctree-l1"><a class="reference internal" href="thread_memory_understanding.html">Cuda Memory Hierarchy and Thread Management</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Thrust Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="thrust_tutorials.html">Thrust Tutorials</a></li>
@@ -409,7 +406,22 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-underlying-compilation">The underlying Compilation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#code-explanation">Code Explanation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#execution-policy-vs-specifier">Execution Policy vs Specifier</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#execution-policy-vs-specifier">Execution Policy vs Specifier</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-exercise-compute-median-temperature">Code exercise: Compute Median Temperature</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#thrust-fancy-iterators">Thrust fancy iterators</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tabulate">Tabulate</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-std-mdspan-for-multi-dimensional-array-view"><code class="docutils literal notranslate"><span class="pre">cuda::std::mdspan</span></code> for multi-dimensional array view</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#serial-vs-parallel">Serial Vs Parallel</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#segmented-summarization">Segmented Summarization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgemented-mean">Sgemented Mean</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgemented-reduction-with-custom-binary-operator">Sgemented Reduction with Custom Binary Operator</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#host-and-device-memory">Host and Device Memory</a></li>
 </ul>
             </nav>
         </div>
@@ -423,10 +435,88 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="thrust-tutorial">
 <h1>Thrust Tutorial<a class="headerlink" href="#thrust-tutorial" title="Link to this heading">#</a></h1>
-<p>Reference: <a class="reference external" href="https://www.youtube.com/watch?v=Sdjn9FOkhnA&amp;amp;list=PL5B692fm6--vWLhYPqLcEu6RF3hXjEyJr&amp;amp;index=1">Youtube</a></p>
+<p>Reference:
+<a class="reference external" href="https://www.youtube.com/watch?v=Sdjn9FOkhnA&amp;amp;list=PL5B692fm6--vWLhYPqLcEu6RF3hXjEyJr&amp;amp;index=1">Youtube</a>
+<a class="reference external" href="https://github.com/NVIDIA/accelerated-computing-hub/blob/main/tutorials/cuda-cpp/README.md">Colab</a></p>
 <section id="the-underlying-compilation">
 <h2>The underlying Compilation<a class="headerlink" href="#the-underlying-compilation" title="Link to this heading">#</a></h2>
 <p><img alt="" src="../../_images/compilation.png" /></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/cuda/bin:&quot;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/cuda_properties.cpp
+<span class="c1">#include &lt;iostream&gt;</span>
+<span class="c1">#include &lt;cuda_runtime.h&gt;</span>
+
+<span class="n">static</span> <span class="n">double</span> <span class="n">max_bandwidth</span><span class="p">(</span><span class="n">cudaDeviceProp</span> <span class="o">&amp;</span><span class="n">prop</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="n">const</span> <span class="n">std</span><span class="p">::</span><span class="n">size_t</span> <span class="n">mem_freq</span> <span class="o">=</span>
+        <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">prop</span><span class="o">.</span><span class="n">memoryClockRate</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">;</span> <span class="o">//</span> <span class="n">kHz</span> <span class="o">-&gt;</span> <span class="n">Hz</span>
+    <span class="n">const</span> <span class="nb">int</span> <span class="n">bus_width</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">memoryBusWidth</span><span class="p">;</span>
+    <span class="n">const</span> <span class="n">std</span><span class="p">::</span><span class="n">size_t</span> <span class="n">bytes_per_second</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">mem_freq</span> <span class="o">*</span> <span class="n">bus_width</span> <span class="o">/</span> <span class="n">CHAR_BIT</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">bytes_per_second</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span>
+            <span class="mi">1024</span><span class="p">;</span> <span class="o">//</span> <span class="n">B</span><span class="o">/</span><span class="n">s</span> <span class="o">-&gt;</span> <span class="n">GB</span><span class="o">/</span><span class="n">s</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">int</span> <span class="n">deviceCount</span><span class="p">;</span>
+    <span class="n">cudaGetDeviceCount</span><span class="p">(</span><span class="o">&amp;</span><span class="n">deviceCount</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">device</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">device</span> <span class="o">&lt;</span> <span class="n">deviceCount</span><span class="p">;</span> <span class="o">++</span><span class="n">device</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cudaDeviceProp</span> <span class="n">prop</span><span class="p">;</span>
+        <span class="n">cudaGetDeviceProperties</span><span class="p">(</span><span class="o">&amp;</span><span class="n">prop</span><span class="p">,</span> <span class="n">device</span><span class="p">);</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;Device &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">device</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">name</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Total Global Memory: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">totalGlobalMem</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot; MB&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Shared Memory per Block: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">sharedMemPerBlock</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot; KB&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Registers per Block: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">regsPerBlock</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Warp Size: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">warpSize</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Max Threads per Block: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">maxThreadsPerBlock</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Max Threads Dimension: [&quot;</span> 
+                  <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">maxThreadsDim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;, &quot;</span>
+                  <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">maxThreadsDim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;, &quot;</span>
+                  <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">maxThreadsDim</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;]&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Max Grid Size: [&quot;</span> 
+                  <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">maxGridSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;, &quot;</span>
+                  <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">maxGridSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;, &quot;</span>
+                  <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">maxGridSize</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;]&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Total Constant Memory: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">totalConstMem</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot; KB&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Compute Capability: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">major</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;.&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">prop</span><span class="o">.</span><span class="n">minor</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;  Max Memory Bandwidth: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">max_bandwidth</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot; GB/s&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/cuda_properties.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/cuda_properties.out<span class="w"> </span>Sources/cuda_properties.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span>/tmp/cuda_properties.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>nvcc fatal   : Value &#39;native&#39; is not defined for option &#39;gpu-architecture&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/bin/bash: /tmp/cuda_properties.out: No such file or directory
+</pre></div>
+</div>
+</div>
+</div>
 </section>
 <section id="code-explanation">
 <h2>Code Explanation<a class="headerlink" href="#code-explanation" title="Link to this heading">#</a></h2>
@@ -437,6 +527,7 @@ document.write(`
 
 <span class="c1">#include &lt;cstdio&gt;</span>
 <span class="c1">#include &lt;vector&gt;</span>
+<span class="c1">#include &lt;algorithm&gt;</span>
 
 <span class="nb">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
     <span class="nb">float</span> <span class="n">k</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">;</span>
@@ -447,7 +538,7 @@ document.write(`
     <span class="n">auto</span> <span class="n">op</span> <span class="o">=</span> <span class="p">[</span><span class="o">=</span><span class="p">](</span><span class="nb">float</span> <span class="n">temp</span><span class="p">){</span>
         <span class="nb">float</span> <span class="n">diff</span> <span class="o">=</span> <span class="n">ambient_temp</span> <span class="o">-</span> <span class="n">temp</span><span class="p">;</span>
         <span class="k">return</span> <span class="n">temp</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">diff</span><span class="p">;</span>
-    <span class="p">}</span>
+    <span class="p">};</span>
 
     <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;step  temp[0]  temp[1]  temp[2]</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
     <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="n">step</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
@@ -463,23 +554,23 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Writing Sources/cpu-cooling.cpp
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/cpu-cooling.cpp
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>Sources/cpu-cooling.cpp<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>compile<span class="w"> </span>the<span class="w"> </span>code
-<span class="o">!</span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>the<span class="w"> </span>executable
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>Sources/cpu-cooling.cpp<span class="w"> </span>-o<span class="w"> </span>temp/a.out<span class="w"> </span>#<span class="w"> </span>compile<span class="w"> </span>the<span class="w"> </span>code
+<span class="o">!</span>./temp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>the<span class="w"> </span>executable
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>step  temp[0]  temp[1]  temp[2]
-0     31.00    22.00    35.00
-1     25.50    21.00    27.50
-2     22.75    20.50    23.75
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>nvcc fatal   : Value &#39;native&#39; is not defined for option &#39;gpu-architecture&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>./temp/a.out: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34&#39; not found (required by ./temp/a.out)
 </pre></div>
 </div>
 </div>
@@ -499,8 +590,7 @@ Unified memory is a memory management system that allows the CPU and GPU to shar
 <span class="nb">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
     <span class="nb">float</span> <span class="n">k</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">;</span>
     <span class="nb">float</span> <span class="n">ambient_temp</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
-    <span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">a</span><span class="p">{</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">50</span> <span class="p">};</span>
-    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">a</span><span class="o">.</span><span class="n">end</span><span class="p">());</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span><span class="p">{</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">50</span> <span class="p">};</span>
     <span class="n">auto</span> <span class="n">transformation</span> <span class="o">=</span> <span class="p">[</span><span class="o">=</span><span class="p">]</span> <span class="n">__host__</span> <span class="n">__device__</span> <span class="p">(</span><span class="nb">float</span> <span class="n">temp</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">temp</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">ambient_temp</span> <span class="o">-</span> <span class="n">temp</span><span class="p">);</span> <span class="p">};</span>
 
     <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;step  temp[0]  temp[1]  temp[2]</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
@@ -520,16 +610,16 @@ Unified memory is a memory management system that allows the CPU and GPU to shar
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>-std<span class="o">=</span>c++14<span class="w"> </span>--extended-lambda<span class="w"> </span>Sources/thrust-cooling.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>compile<span class="w"> </span>the<span class="w"> </span>code
-<span class="o">!</span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>the<span class="w"> </span>executable
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>-std<span class="o">=</span>c++14<span class="w"> </span>--extended-lambda<span class="w"> </span>Sources/thrust-cooling.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>-o<span class="w"> </span>temp/a.out<span class="w"> </span>#<span class="w"> </span>compile<span class="w"> </span>the<span class="w"> </span>code
+<span class="o">!</span>./temp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>the<span class="w"> </span>executable
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>step  temp[0]  temp[1]  temp[2]
-0     31.00    22.00    35.00
-1     25.50    21.00    27.50
-2     22.75    20.50    23.75
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>nvcc fatal   : Value &#39;native&#39; is not defined for option &#39;gpu-architecture&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>./temp/a.out: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34&#39; not found (required by ./temp/a.out)
 </pre></div>
 </div>
 </div>
@@ -539,8 +629,813 @@ Unified memory is a memory management system that allows the CPU and GPU to shar
 <h2>Execution Policy vs Specifier<a class="headerlink" href="#execution-policy-vs-specifier" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Execution</span> <span class="pre">Plolicy</span></code>(<code class="docutils literal notranslate"><span class="pre">thrust::device</span></code>,<code class="docutils literal notranslate"><span class="pre">thrust::host</span></code>) indicates where the code will run. It doesn’t automatically compile code for the location.</p>
 <p><code class="docutils literal notranslate"><span class="pre">Execution</span> <span class="pre">Specifier</span></code>(<code class="docutils literal notranslate"><span class="pre">__host__</span></code>,<code class="docutils literal notranslate"><span class="pre">__device__</span></code>) indicates where the code can run. It doesn’t automatically run code there.</p>
-<p><img alt="" src="../../_images/policyvsspecifier.png" />
-<img alt="" src="../../_images/table_policyvsspecifier.png" /></p>
+<p><img alt="" src="https://github.com/rhu2xx/picx-images-hosting/raw/master/20260129/table_policyvsspecifier.2h8te16cn1.webp" />
+<img alt="" src="https://github.com/rhu2xx/picx-images-hosting/raw/master/20260129/policyvsspecifier.3rbqkcojo5.webp" /></p>
+<section id="code-exercise-compute-median-temperature">
+<h3>Code exercise: Compute Median Temperature<a class="headerlink" href="#code-exercise-compute-median-temperature" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/port-sort-to-gpu.cpp
+<span class="c1">#include &lt;thrust/execution_policy.h&gt;</span>
+<span class="c1">#include &lt;thrust/universal_vector.h&gt;</span>
+<span class="c1">#include &lt;thrust/transform.h&gt;</span>
+<span class="c1">#include &lt;cstdio&gt;</span>
+<span class="c1">#include &lt;algorithm&gt;</span>
+
+<span class="nb">float</span> <span class="n">median</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">vec</span><span class="p">)</span>
+<span class="p">{</span>
+    
+    <span class="n">std</span><span class="p">::</span><span class="n">sort</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">vec</span><span class="o">.</span><span class="n">end</span><span class="p">());</span>
+    <span class="k">return</span> <span class="n">vec</span><span class="p">[</span><span class="n">vec</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(){</span>
+    <span class="nb">float</span> <span class="n">k</span> <span class="o">=</span><span class="mf">0.5</span><span class="p">;</span>
+    <span class="nb">float</span> <span class="n">ambient_temp</span> <span class="o">=</span><span class="mi">20</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span><span class="p">{</span><span class="mi">42</span><span class="p">,</span><span class="mi">24</span><span class="p">,</span><span class="mi">50</span><span class="p">};</span>
+    <span class="n">auto</span> <span class="n">transformation</span> <span class="o">=</span> <span class="p">[</span><span class="o">=</span><span class="p">]</span> <span class="n">__host__</span> <span class="n">__device__</span> <span class="p">(</span><span class="nb">float</span> <span class="n">temp</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">temp</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">ambient_temp</span> <span class="o">-</span> <span class="n">temp</span><span class="p">);</span> <span class="p">};</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;step  median</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="n">step</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">transform</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span><span class="n">temp</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span>
+                          <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">transformation</span><span class="p">);</span>
+        <span class="nb">float</span> <span class="n">median_temp</span> <span class="o">=</span> <span class="n">median</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+        <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">     </span><span class="si">%.2f</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">median_temp</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/port-sort-to-gpu.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># !nvcc -std=c++14 --extended-lambda Sources/port-sort-to-gpu.cpp -x cu -arch=native -o temp/a.out # compile the code</span>
+<span class="c1"># !time -v ./temp/a.out # run the executable</span>
+<span class="o">!</span>/usr/bin/time<span class="w"> </span>-v<span class="w"> </span>./temp/a.out
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>./temp/a.out: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34&#39; not found (required by ./temp/a.out)
+Command exited with non-zero status 1
+	Command being timed: &quot;./temp/a.out&quot;
+	User time (seconds): 0.00
+	System time (seconds): 0.00
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.00
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 852
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 49
+	Voluntary context switches: 0
+	Involuntary context switches: 0
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 1
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="thrust-fancy-iterators">
+<h2>Thrust fancy iterators<a class="headerlink" href="#thrust-fancy-iterators" title="Link to this heading">#</a></h2>
+<p><strong>We don’t need to declare the execution policy when using fancy iterators.</strong></p>
+<p>Here we show three types of fancy iterators in Thrust.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thrust</span><span class="o">::</span><span class="n">make_counting_iterator</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+<span class="n">thrust</span><span class="o">::</span><span class="n">for_each</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span><span class="n">end</span><span class="p">,</span><span class="n">print</span><span class="p">);</span>
+
+<span class="n">thrust</span><span class="o">::</span><span class="n">make_zip_iterator</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">begin</span><span class="p">());</span>
+<span class="n">thrust</span><span class="o">::</span><span class="n">make_transform_iterator</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span>
+<span class="w">    </span><span class="p">[]</span><span class="w"> </span><span class="n">__host__</span><span class="w"> </span><span class="n">__device__</span><span class="w"> </span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="p">;</span><span class="w"> </span><span class="p">});</span>
+</pre></div>
+</div>
+<p>In the following code, we will implement the maximum of the change in the temperature using Thrust.
+The original step should be</p>
+<ol class="arabic simple">
+<li><p>compute the gap between the current temperature and previous temperature <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code>;</p></li>
+<li><p>compute the maximum of the gap</p></li>
+</ol>
+<p>But in this implementation, we have to read <code class="docutils literal notranslate"><span class="pre">2*n</span></code> floats total from <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code>, and then store <code class="docutils literal notranslate"><span class="pre">n</span></code> floats to the temporary array <code class="docutils literal notranslate"><span class="pre">temp</span></code>. Then in the reduction step, we read <code class="docutils literal notranslate"><span class="pre">n</span></code> floats from <code class="docutils literal notranslate"><span class="pre">temp</span></code>. So the total memory access is <code class="docutils literal notranslate"><span class="pre">4*n</span></code> floats.</p>
+<p>To optimize the memory access, we can find the maximum when computing the gap, so that we don’t need the temporary array <code class="docutils literal notranslate"><span class="pre">temp</span></code> to store the gap. The total memory access is <code class="docutils literal notranslate"><span class="pre">2*n</span></code> floats.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/naive-vs-iterators.cpp
+<span class="c1">#include &lt;thrust/execution_policy.h&gt;</span>
+<span class="c1">#include &lt;thrust/universal_vector.h&gt;</span>
+<span class="c1">#include &lt;thrust/transform.h&gt;</span>
+<span class="c1">#include &lt;thrust/reduce.h&gt;</span>
+<span class="c1">#include &lt;thrust/sequence.h&gt;</span>
+<span class="c1">#include &lt;cstdio&gt;</span>
+<span class="c1">#include &lt;chrono&gt;</span>
+
+<span class="nb">float</span> <span class="n">naive_max_change</span><span class="p">(</span><span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">b</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">diff</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">size</span><span class="p">());</span>
+    <span class="o">//</span><span class="n">x</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="n">y</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="n">diff</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">y</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">transform</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">a</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">b</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">diff</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>
+        <span class="p">[]</span><span class="n">__host__</span> <span class="n">__device__</span><span class="p">(</span><span class="nb">float</span> <span class="n">x</span><span class="p">,</span> <span class="nb">float</span> <span class="n">y</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">y</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="k">return</span> <span class="n">thrust</span><span class="p">::</span><span class="n">reduce</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">diff</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">diff</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">,</span> <span class="n">thrust</span><span class="p">::</span><span class="n">maximum</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span><span class="p">{});</span>
+<span class="p">}</span>
+
+<span class="nb">float</span> <span class="n">max_change</span><span class="p">(</span><span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">b</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">auto</span> <span class="nb">zip</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">make_zip_iterator</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">b</span><span class="o">.</span><span class="n">begin</span><span class="p">());</span>
+    <span class="n">auto</span> <span class="n">transform</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">make_transform_iterator</span><span class="p">(</span><span class="nb">zip</span><span class="p">,</span> <span class="p">[]</span><span class="n">__host__</span> <span class="n">__device__</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="nb">tuple</span><span class="o">&lt;</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="o">&gt;</span> <span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">get</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">thrust</span><span class="p">::</span><span class="n">get</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">t</span><span class="p">));</span>
+    <span class="p">});</span>
+    <span class="k">return</span> <span class="n">thrust</span><span class="p">::</span><span class="n">reduce</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">transform</span> <span class="o">+</span> <span class="n">a</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">,</span> <span class="n">thrust</span><span class="p">::</span><span class="n">maximum</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span><span class="p">{});</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="o">//</span> <span class="n">allocate</span> <span class="n">vectors</span> <span class="n">containing</span> <span class="mi">2</span><span class="o">^</span><span class="mi">28</span> <span class="n">elements</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">a</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">28</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">b</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">28</span><span class="p">);</span>
+
+    <span class="n">thrust</span><span class="p">::</span><span class="n">sequence</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">a</span><span class="o">.</span><span class="n">end</span><span class="p">());</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">sequence</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">rbegin</span><span class="p">(),</span> <span class="n">b</span><span class="o">.</span><span class="n">rend</span><span class="p">());</span>
+
+    <span class="n">auto</span> <span class="n">start_naive</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">naive_max_change</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">end_naive</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">naive_duration</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">duration_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">milliseconds</span><span class="o">&gt;</span><span class="p">(</span><span class="n">end_naive</span> <span class="o">-</span> <span class="n">start_naive</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">();</span>
+
+    <span class="n">auto</span> <span class="n">start</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">max_change</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">end</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">duration</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">duration_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">milliseconds</span><span class="o">&gt;</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">();</span>
+
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;iterators are </span><span class="si">%g</span><span class="s2"> times faster than naive approach</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">naive_duration</span> <span class="o">/</span> <span class="n">duration</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/naive-vs-iterators.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/naive-vs-iterators.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>nvcc fatal   : Value &#39;native&#39; is not defined for option &#39;gpu-architecture&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/bin/bash: /tmp/a.out: No such file or directory
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="tabulate">
+<h2>Tabulate<a class="headerlink" href="#tabulate" title="Link to this heading">#</a></h2>
+<p>Here, we implement a heat transfer simulation using the tabulate iterator to compute the temperature at each point based on its neighbors.</p>
+<p><code class="docutils literal notranslate"><span class="pre">thrust::tabulate</span></code> is the equivalent of transformation of the counting iterator.</p>
+<blockquote>
+<div><p>in <code class="docutils literal notranslate"><span class="pre">thrust::transform</span></code>, the object of <code class="docutils literal notranslate"><span class="pre">op</span></code> is the value of the input iterator.
+in <code class="docutils literal notranslate"><span class="pre">thrust::tabulate</span></code>, the object of <code class="docutils literal notranslate"><span class="pre">op</span></code> is the index of the output iterator.</p>
+</div></blockquote>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">navie</span> <span class="n">version</span>
+<span class="c1">#include &lt;cuda/std/mdspan&gt;</span>
+
+<span class="o">//</span> <span class="n">extract</span> <span class="n">the</span> <span class="n">row</span> <span class="ow">and</span> <span class="n">column</span> <span class="n">idx</span>
+<span class="n">__host__</span> <span class="n">__device__</span>
+<span class="n">cuda</span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="o">&gt;</span> <span class="n">row_col</span><span class="p">(</span><span class="nb">int</span> <span class="nb">id</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">){</span>
+    <span class="k">return</span> <span class="n">cuda</span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">make_pair</span><span class="p">(</span><span class="nb">id</span> <span class="o">/</span> <span class="n">width</span><span class="p">,</span> <span class="nb">id</span> <span class="o">%</span> <span class="n">width</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">void</span> <span class="n">simulate</span><span class="p">(</span>
+    <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="ow">in</span><span class="p">,</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">out</span>
+<span class="p">){</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="o">*</span><span class="n">in_ptr</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="ow">in</span><span class="o">.</span><span class="n">data</span><span class="p">());</span> <span class="o">//</span> <span class="n">get</span> <span class="n">the</span> <span class="n">raw</span> <span class="n">memory</span> <span class="n">pointer</span>
+    <span class="n">auto</span> <span class="n">cell_indices</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">make_counting_iterator</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">transform</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">cell_indices</span><span class="p">,</span> <span class="n">cell_indices</span> <span class="o">+</span> <span class="ow">in</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">out</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>
+        <span class="p">[</span><span class="n">in_ptr</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">]</span> <span class="n">__host__</span> <span class="n">__device__</span> <span class="p">(</span><span class="nb">int</span> <span class="nb">id</span><span class="p">){</span>
+            <span class="n">auto</span> <span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">row_col</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+            <span class="o">//</span> <span class="n">boundary</span> <span class="n">check</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">row</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">col</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">col</span> <span class="o">&lt;</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nb">float</span> <span class="n">d2tdx2</span> <span class="o">=</span> <span class="n">in_ptr</span><span class="p">[(</span><span class="n">row</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">+</span> <span class="n">in_ptr</span><span class="p">[(</span><span class="n">row</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+                <span class="nb">float</span> <span class="n">d2tdy2</span> <span class="o">=</span> <span class="n">in_ptr</span><span class="p">[(</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">+</span> <span class="n">in_ptr</span><span class="p">[(</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">];</span>
+
+                <span class="k">return</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">column</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.2</span><span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">d2tdx2</span> <span class="o">+</span> <span class="n">d2tdy2</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">column</span><span class="p">];</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">);</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span>  <span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">line</span> <span class="mi">26</span>
+    <span class="k">return</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">column</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.2</span><span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">d2tdx2</span> <span class="o">+</span> <span class="n">d2tdy2</span><span class="p">);</span>
+                                            <span class="o">^</span>
+<span class="ne">SyntaxError</span>: invalid decimal literal
+</pre></div>
+</div>
+</div>
+</div>
+<p>To clarify this function, we use <code class="docutils literal notranslate"><span class="pre">thrust::tabulate</span></code> to replace the <code class="docutils literal notranslate"><span class="pre">thrust::transform</span></code> and delete the temporary iterator <code class="docutils literal notranslate"><span class="pre">thrust::make_counting_iterator(0)</span></code>.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">tabulate</span> <span class="n">version</span>
+<span class="c1">#include &lt;thrust/tabulate.h&gt;</span>
+
+<span class="n">void</span> <span class="n">simulate</span><span class="p">(</span>
+    <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="ow">in</span><span class="p">,</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">out</span>
+<span class="p">){</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="o">*</span><span class="n">in_ptr</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="ow">in</span><span class="o">.</span><span class="n">data</span><span class="p">());</span> <span class="o">//</span> <span class="n">get</span> <span class="n">the</span> <span class="n">raw</span> <span class="n">memory</span> <span class="n">pointer</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">tabulate</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">out</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span>
+        <span class="p">[</span><span class="n">in_ptr</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">]</span> <span class="n">__host__</span> <span class="n">__device__</span> <span class="p">(</span><span class="nb">int</span> <span class="nb">id</span><span class="p">){</span>
+            <span class="n">auto</span> <span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">row_col</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+            <span class="o">//</span> <span class="n">boundary</span> <span class="n">check</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">row</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">col</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">col</span> <span class="o">&lt;</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nb">float</span> <span class="n">d2tdx2</span> <span class="o">=</span> <span class="n">in_ptr</span><span class="p">[(</span><span class="n">row</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">+</span> <span class="n">in_ptr</span><span class="p">[(</span><span class="n">row</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+                <span class="nb">float</span> <span class="n">d2tdy2</span> <span class="o">=</span> <span class="n">in_ptr</span><span class="p">[(</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">+</span> <span class="n">in_ptr</span><span class="p">[(</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">];</span>
+
+                <span class="k">return</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.2</span><span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">d2tdx2</span> <span class="o">+</span> <span class="n">d2tdy2</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="n">in_ptr</span><span class="p">[</span><span class="n">row</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">col</span><span class="p">];</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="cuda-std-mdspan-for-multi-dimensional-array-view">
+<h3><code class="docutils literal notranslate"><span class="pre">cuda::std::mdspan</span></code> for multi-dimensional array view<a class="headerlink" href="#cuda-std-mdspan-for-multi-dimensional-array-view" title="Link to this heading">#</a></h3>
+<p><img alt="" src="https://github.com/rhu2xx/picx-images-hosting/raw/master/20260129/image.96a92s74w0.webp" /></p>
+<p>Notice that we use <code class="docutils literal notranslate"><span class="pre">row_col</span></code> to conver the 1D index to 2D index. This is because Thrust doesn’t support multi-dimensional array view. We can use <code class="docutils literal notranslate"><span class="pre">thrust::mdspan</span></code> to achieve this.</p>
+<p><strong>syntax:</strong></p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">cuda</span><span class="o">::</span><span class="n">std</span><span class="o">::</span><span class="n">mdspan</span><span class="w"> </span><span class="nf">md</span><span class="p">(</span><span class="n">pointer</span><span class="p">,</span><span class="w"> </span><span class="n">extent0</span><span class="p">,</span><span class="w"> </span><span class="n">extent1</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+</pre></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/mdspan.cpp
+<span class="c1">#include &lt;cuda/std/mdspan&gt;</span>
+<span class="c1">#include &lt;cuda/std/array&gt;</span>
+<span class="c1">#include &lt;thrust/device_ptr.h&gt;</span>
+<span class="c1">#include &lt;cstdio&gt;</span>
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">cuda</span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">array</span><span class="o">&lt;</span><span class="nb">int</span><span class="p">,</span> <span class="mi">6</span><span class="o">&gt;</span> <span class="n">sd</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">};</span>
+  <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;type of sd.data(): </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">typeid</span><span class="p">(</span><span class="n">sd</span><span class="o">.</span><span class="n">data</span><span class="p">())</span><span class="o">.</span><span class="n">name</span><span class="p">());</span> <span class="o">//</span> <span class="nb">type</span> <span class="n">of</span> <span class="n">sd</span><span class="o">.</span><span class="n">data</span><span class="p">():</span> <span class="n">Pi</span> <span class="n">i</span><span class="o">.</span><span class="n">e</span><span class="o">.</span><span class="p">,</span> <span class="n">pointer</span> <span class="n">to</span> <span class="nb">int</span>
+  <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;type of sd.data(): </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">typeid</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">sd</span><span class="o">.</span><span class="n">data</span><span class="p">()))</span><span class="o">.</span><span class="n">name</span><span class="p">());</span>
+
+  <span class="o">//</span> <span class="n">cuda</span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">mdspan</span> <span class="n">md</span><span class="p">(</span><span class="n">sd</span><span class="o">.</span><span class="n">data</span><span class="p">(),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+  <span class="n">cuda</span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">mdspan</span> <span class="n">md</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">sd</span><span class="o">.</span><span class="n">data</span><span class="p">()),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span>
+  <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;type of md(): </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">typeid</span><span class="p">(</span><span class="n">md</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">());</span> 
+  <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;md(0, 0) = </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">md</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span> <span class="o">//</span> <span class="mi">0</span>
+  <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;md(1, 2) = </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">md</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">));</span> <span class="o">//</span> <span class="mi">5</span>
+
+  <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;size   = %zu</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">size</span><span class="p">());</span>    <span class="o">//</span> <span class="mi">6</span>
+  <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;height = %zu</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">extent</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span> <span class="o">//</span> <span class="mi">2</span>
+  <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;width  = %zu</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">md</span><span class="o">.</span><span class="n">extent</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span> <span class="o">//</span> <span class="mi">3</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/mdspan.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/mdspan.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>type of sd.data(): Pi
+type of sd.data(): Pi
+type of md(): N4cuda3std3__46mdspanIiNS1_7extentsImJLm18446744073709551615ELm18446744073709551615EEEENS1_12layout_rightENS1_16default_accessorIiEEEE
+md(0, 0) = 0
+md(1, 2) = 5
+size   = 6
+height = 2
+width  = 3
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="serial-vs-parallel">
+<h2>Serial Vs Parallel<a class="headerlink" href="#serial-vs-parallel" title="Link to this heading">#</a></h2>
+<p><img alt="" src="https://github.com/rhu2xx/picx-images-hosting/raw/master/20260129/image.7axoa5t3w3.webp" /></p>
+<section id="segmented-summarization">
+<h3>Segmented Summarization<a class="headerlink" href="#segmented-summarization" title="Link to this heading">#</a></h3>
+<p>We use the example of row reduction to illustrate the difference between serial and parallel execution.</p>
+<p>First we show the naive serial implementation.
+We use transform to compute the reduction of each row (segment) one by one.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/naive-segmented-sum.cpp
+<span class="c1">#include &lt;cstdio&gt;</span>
+<span class="c1">#include &lt;chrono&gt;</span>
+
+<span class="c1">#include &lt;thrust/tabulate.h&gt;</span>
+<span class="c1">#include &lt;thrust/execution_policy.h&gt;</span>
+<span class="c1">#include &lt;thrust/universal_vector.h&gt;</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">row_temperatures</span><span class="p">(</span>
+    <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span>
+    <span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">temp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="o">//</span> <span class="n">allocate</span> <span class="n">vector</span> <span class="n">to</span> <span class="n">store</span> <span class="n">sums</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">sums</span><span class="p">(</span><span class="n">height</span><span class="p">);</span>
+
+    <span class="o">//</span> <span class="n">take</span> <span class="n">raw</span> <span class="n">pointer</span> <span class="n">to</span> <span class="err">`</span><span class="n">temp</span><span class="err">`</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="o">*</span><span class="n">d_temp_ptr</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">data</span><span class="p">());</span>
+
+    <span class="o">//</span> <span class="n">compute</span> <span class="n">row</span> <span class="nb">sum</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">tabulate</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">sums</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">sums</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">]</span><span class="n">__host__</span> <span class="n">__device__</span><span class="p">(</span><span class="nb">int</span> <span class="n">row_id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">float</span> <span class="nb">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">width</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nb">sum</span> <span class="o">+=</span> <span class="n">d_temp_ptr</span><span class="p">[</span><span class="n">row_id</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">i</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">;</span>
+    <span class="p">});</span>
+
+    <span class="k">return</span> <span class="n">sums</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">init</span><span class="p">(</span><span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">low</span> <span class="o">=</span> <span class="mf">15.0</span><span class="p">;</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">high</span> <span class="o">=</span> <span class="mf">90.0</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">,</span> <span class="n">low</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">width</span><span class="p">,</span> <span class="n">high</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">temp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">16777216</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+
+    <span class="n">auto</span> <span class="n">begin</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">sums</span> <span class="o">=</span> <span class="n">row_temperatures</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">temp</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">end</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">seconds</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">gigabytes</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span><span class="p">;</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">throughput</span> <span class="o">=</span> <span class="n">gigabytes</span> <span class="o">/</span> <span class="n">seconds</span><span class="p">;</span>
+
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;computed in </span><span class="si">%g</span><span class="s2"> s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">);</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;achieved throughput: </span><span class="si">%g</span><span class="s2"> GB/s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">throughput</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/naive-segmented-sum.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/naive-segmented-sum.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>computed in 0.466818 s
+achieved throughput: 2.14216 GB/s
+</pre></div>
+</div>
+</div>
+</div>
+<p>To avoid manual loop, we can use <code class="docutils literal notranslate"><span class="pre">thrust::reduce_by_key</span></code> to implement the segmented reduction in parallel.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/reduction-segmented-sum.cpp
+<span class="c1">#include &lt;cstdio&gt;</span>
+<span class="c1">#include &lt;chrono&gt;</span>
+
+<span class="c1">#include &lt;thrust/tabulate.h&gt;</span>
+<span class="c1">#include &lt;thrust/iterator/discard_iterator.h&gt;</span>
+<span class="c1">#include &lt;thrust/execution_policy.h&gt;</span>
+<span class="c1">#include &lt;thrust/universal_vector.h&gt;</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">row_temperatures</span><span class="p">(</span>
+    <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">temp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span> <span class="n">row_ids</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">tabulate</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">row_ids</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">row_ids</span><span class="o">.</span><span class="n">end</span><span class="p">(),[</span><span class="n">width</span><span class="p">]</span><span class="n">__host__</span> <span class="n">__device__</span><span class="p">(</span><span class="nb">int</span> <span class="n">i</span><span class="p">)</span> <span class="p">{</span> 
+        <span class="k">return</span> <span class="n">i</span> <span class="o">/</span> <span class="n">width</span><span class="p">;</span> 
+    <span class="p">});</span>
+    
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">sums</span><span class="p">(</span><span class="n">height</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">reduce_by_key</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">row_ids</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">row_ids</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span>   <span class="o">//</span> <span class="nb">input</span> <span class="n">keys</span>
+        <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>                     <span class="o">//</span> <span class="nb">input</span> <span class="n">values</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_discard_iterator</span><span class="p">(),</span>  <span class="o">//</span> <span class="n">output</span> <span class="n">keys</span>
+        <span class="n">sums</span><span class="o">.</span><span class="n">begin</span><span class="p">());</span>                    <span class="o">//</span> <span class="n">output</span> <span class="n">values</span>
+
+    <span class="k">return</span> <span class="n">sums</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">init</span><span class="p">(</span><span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">low</span> <span class="o">=</span> <span class="mf">15.0</span><span class="p">;</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">high</span> <span class="o">=</span> <span class="mf">90.0</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">,</span> <span class="n">low</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">width</span><span class="p">,</span> <span class="n">high</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">temp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">16777216</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+
+    <span class="n">auto</span> <span class="n">begin</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">sums</span> <span class="o">=</span> <span class="n">row_temperatures</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">temp</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">end</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">seconds</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">gigabytes</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span><span class="p">;</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">throughput</span> <span class="o">=</span> <span class="n">gigabytes</span> <span class="o">/</span> <span class="n">seconds</span><span class="p">;</span>
+
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;computed in </span><span class="si">%g</span><span class="s2"> s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">);</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;achieved throughput: </span><span class="si">%g</span><span class="s2"> GB/s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">throughput</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/reduction-segmented-sum.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/reduction-segmented-sum.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>computed in 0.244539 s
+achieved throughput: 4.08933 GB/s
+</pre></div>
+</div>
+</div>
+</div>
+<p>Even though we explicitly avoid the for loop, we introduce the overhead of <code class="docutils literal notranslate"><span class="pre">row_ids</span></code> array to store the row indices. This array is of size <code class="docutils literal notranslate"><span class="pre">num_rows</span> <span class="pre">*</span> <span class="pre">num_cols</span></code>, which can be very large when the matrix is large.</p>
+<p>To optimize the memory usage, we can use <code class="docutils literal notranslate"><span class="pre">thrust::make_transform_iterator</span></code> to generate the row indices on the fly instead of storing them in an array.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/reduction-segmented-sum-op.cpp
+<span class="c1">#include &lt;cstdio&gt;</span>
+<span class="c1">#include &lt;chrono&gt;</span>
+
+<span class="c1">#include &lt;thrust/tabulate.h&gt;</span>
+<span class="c1">#include &lt;thrust/iterator/discard_iterator.h&gt;</span>
+<span class="c1">#include &lt;thrust/execution_policy.h&gt;</span>
+<span class="c1">#include &lt;thrust/universal_vector.h&gt;</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">row_temperatures</span><span class="p">(</span>
+    <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">temp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">auto</span> <span class="n">row_ids_begin</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">make_transform_iterator</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_counting_iterator</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="p">[</span><span class="n">width</span><span class="p">]</span><span class="n">__host__</span> <span class="n">__device__</span> <span class="p">(</span><span class="nb">int</span> <span class="n">idx</span><span class="p">){</span>
+        <span class="k">return</span> <span class="n">idx</span><span class="o">/</span><span class="n">width</span><span class="p">;</span>
+    <span class="p">});</span>
+    <span class="n">auto</span> <span class="n">row_ids_end</span> <span class="o">=</span> <span class="n">row_ids_begin</span> <span class="o">+</span> <span class="n">temp</span><span class="o">.</span><span class="n">size</span><span class="p">();</span>
+    
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">sums</span><span class="p">(</span><span class="n">height</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">reduce_by_key</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">row_ids_begin</span><span class="p">,</span> <span class="n">row_ids_end</span><span class="p">,</span>   <span class="o">//</span> <span class="nb">input</span> <span class="n">keys</span>
+        <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>                     <span class="o">//</span> <span class="nb">input</span> <span class="n">values</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_discard_iterator</span><span class="p">(),</span>  <span class="o">//</span> <span class="n">output</span> <span class="n">keys</span>
+        <span class="n">sums</span><span class="o">.</span><span class="n">begin</span><span class="p">());</span>                    <span class="o">//</span> <span class="n">output</span> <span class="n">values</span>
+
+    <span class="k">return</span> <span class="n">sums</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">init</span><span class="p">(</span><span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">low</span> <span class="o">=</span> <span class="mf">15.0</span><span class="p">;</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">high</span> <span class="o">=</span> <span class="mf">90.0</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">,</span> <span class="n">low</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">width</span><span class="p">,</span> <span class="n">high</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">temp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">16777216</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+
+    <span class="n">auto</span> <span class="n">begin</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">sums</span> <span class="o">=</span> <span class="n">row_temperatures</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">temp</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">end</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">seconds</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">gigabytes</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span><span class="p">;</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">throughput</span> <span class="o">=</span> <span class="n">gigabytes</span> <span class="o">/</span> <span class="n">seconds</span><span class="p">;</span>
+
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;computed in </span><span class="si">%g</span><span class="s2"> s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">);</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;achieved throughput: </span><span class="si">%g</span><span class="s2"> GB/s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">throughput</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Writing Sources/reduction-segmented-sum-op.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/reduction-segmented-sum-op.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>computed in 0.0032395 s
+achieved throughput: 308.689 GB/s
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="sgemented-mean">
+<h3>Sgemented Mean<a class="headerlink" href="#sgemented-mean" title="Link to this heading">#</a></h3>
+<p>To compute the segmented mean, we can first compute the segmented sum and then divide each sum by the number of elements in each segment.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/reduction-segmented-mean.cpp
+<span class="c1">#include &lt;cstdio&gt;</span>
+<span class="c1">#include &lt;chrono&gt;</span>
+
+<span class="c1">#include &lt;thrust/tabulate.h&gt;</span>
+<span class="c1">#include &lt;thrust/iterator/discard_iterator.h&gt;</span>
+<span class="c1">#include &lt;thrust/execution_policy.h&gt;</span>
+<span class="c1">#include &lt;thrust/universal_vector.h&gt;</span>
+
+<span class="n">struct</span> <span class="n">mean_functor</span> <span class="p">{</span>
+    <span class="nb">int</span> <span class="n">width</span><span class="p">;</span>
+    <span class="n">__host__</span> <span class="n">__device__</span> <span class="nb">float</span> <span class="n">operator</span><span class="p">()(</span><span class="nb">float</span> <span class="nb">sum</span><span class="p">)</span> <span class="n">const</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">sum</span> <span class="o">/</span> <span class="n">width</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">row_temperatures_mean</span><span class="p">(</span>
+    <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">temp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span> <span class="n">means</span><span class="p">(</span><span class="n">height</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">row_ids_begin</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">make_transform_iterator</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_counting_iterator</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="p">[</span><span class="n">width</span><span class="p">]</span><span class="n">__host__</span> <span class="n">__device__</span> <span class="p">(</span><span class="nb">int</span> <span class="n">idx</span><span class="p">){</span>
+        <span class="k">return</span> <span class="n">idx</span><span class="o">/</span><span class="n">width</span><span class="p">;</span>
+    <span class="p">});</span>
+    <span class="n">auto</span> <span class="n">row_ids_end</span> <span class="o">=</span> <span class="n">row_ids_begin</span> <span class="o">+</span> <span class="n">temp</span><span class="o">.</span><span class="n">size</span><span class="p">();</span>
+    <span class="o">//</span> <span class="n">compute</span> <span class="n">the</span> <span class="n">summation</span> <span class="n">first</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">reduce_by_key</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">row_ids_begin</span><span class="p">,</span> <span class="n">row_ids_end</span><span class="p">,</span>   <span class="o">//</span> <span class="nb">input</span> <span class="n">keys</span>
+        <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>                     <span class="o">//</span> <span class="nb">input</span> <span class="n">values</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_discard_iterator</span><span class="p">(),</span>  <span class="o">//</span> <span class="n">output</span> <span class="n">keys</span>
+        <span class="n">means</span><span class="o">.</span><span class="n">begin</span><span class="p">());</span>                    <span class="o">//</span> <span class="n">output</span> <span class="n">values</span>
+    <span class="o">//</span> <span class="n">then</span> <span class="n">divide</span> <span class="n">each</span> <span class="nb">sum</span> <span class="n">by</span> <span class="n">width</span> <span class="n">to</span> <span class="n">get</span> <span class="n">the</span> <span class="n">mean</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">transform</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">means</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">means</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span>
+        <span class="n">means</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>
+        <span class="n">mean_functor</span><span class="p">{</span><span class="n">width</span><span class="p">}</span>
+    <span class="p">);</span>
+    <span class="k">return</span> <span class="n">means</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">init</span><span class="p">(</span><span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">low</span> <span class="o">=</span> <span class="mf">15.0</span><span class="p">;</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">high</span> <span class="o">=</span> <span class="mf">90.0</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">,</span> <span class="n">low</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">width</span><span class="p">,</span> <span class="n">high</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">temp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">16777216</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+
+    <span class="n">auto</span> <span class="n">begin</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">means</span> <span class="o">=</span> <span class="n">row_temperatures_mean</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">temp</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">end</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">seconds</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">gigabytes</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span><span class="p">;</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">throughput</span> <span class="o">=</span> <span class="n">gigabytes</span> <span class="o">/</span> <span class="n">seconds</span><span class="p">;</span>
+
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;computed in </span><span class="si">%g</span><span class="s2"> s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">);</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;achieved throughput: </span><span class="si">%g</span><span class="s2"> GB/s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">throughput</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/reduction-segmented-mean.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/reduction-segmented-mean.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span><span class="w"> </span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>computed in 0.00418439 s
+achieved throughput: 238.983 GB/s
+</pre></div>
+</div>
+</div>
+</div>
+<p>We can fuse the two steps into one step using <code class="docutils literal notranslate"><span class="pre">make_transform_output_iterator</span></code> after the segmented sum.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/reduction-segmented-mean.cpp
+<span class="c1">#include &lt;cstdio&gt;</span>
+<span class="c1">#include &lt;chrono&gt;</span>
+
+<span class="c1">#include &lt;thrust/tabulate.h&gt;</span>
+<span class="c1">#include &lt;thrust/iterator/discard_iterator.h&gt;</span>
+<span class="c1">#include &lt;thrust/iterator/transform_output_iterator.h&gt;</span>
+<span class="c1">#include &lt;thrust/execution_policy.h&gt;</span>
+<span class="c1">#include &lt;thrust/universal_vector.h&gt;</span>
+
+<span class="n">struct</span> <span class="n">mean_functor</span> <span class="p">{</span>
+    <span class="nb">int</span> <span class="n">width</span><span class="p">;</span>
+    <span class="o">//</span><span class="err">!</span> <span class="err">`</span><span class="p">()</span><span class="err">`</span> <span class="p">:</span> 
+    <span class="n">__host__</span> <span class="n">__device__</span> <span class="nb">float</span> <span class="n">operator</span><span class="p">()(</span><span class="nb">float</span> <span class="nb">sum</span><span class="p">)</span> <span class="n">const</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">sum</span> <span class="o">/</span> <span class="n">width</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">row_temperatures_mean</span><span class="p">(</span>
+    <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;&amp;</span> <span class="n">temp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">int</span><span class="o">&gt;</span> <span class="n">means</span><span class="p">(</span><span class="n">height</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">row_ids_begin</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">make_transform_iterator</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_counting_iterator</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="p">[</span><span class="n">width</span><span class="p">]</span><span class="n">__host__</span> <span class="n">__device__</span> <span class="p">(</span><span class="nb">int</span> <span class="n">idx</span><span class="p">){</span>
+        <span class="k">return</span> <span class="n">idx</span><span class="o">/</span><span class="n">width</span><span class="p">;</span>
+    <span class="p">});</span>
+    <span class="n">auto</span> <span class="n">means_output_iterator</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">make_transform_output_iterator</span><span class="p">(</span>
+        <span class="n">means</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>
+        <span class="n">mean_functor</span><span class="p">{</span><span class="n">width</span><span class="p">}</span>
+    <span class="p">);</span>
+    <span class="n">auto</span> <span class="n">row_ids_end</span> <span class="o">=</span> <span class="n">row_ids_begin</span> <span class="o">+</span> <span class="n">temp</span><span class="o">.</span><span class="n">size</span><span class="p">();</span>
+
+    <span class="n">thrust</span><span class="p">::</span><span class="n">reduce_by_key</span><span class="p">(</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">row_ids_begin</span><span class="p">,</span> <span class="n">row_ids_end</span><span class="p">,</span>   <span class="o">//</span> <span class="nb">input</span> <span class="n">keys</span>
+        <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>                     <span class="o">//</span> <span class="nb">input</span> <span class="n">values</span>
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_discard_iterator</span><span class="p">(),</span>  <span class="o">//</span> <span class="n">output</span> <span class="n">keys</span>
+        <span class="n">means_output_iterator</span><span class="p">);</span>                    <span class="o">//</span> <span class="n">output</span> <span class="n">values</span>
+
+    <span class="k">return</span> <span class="n">means</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">init</span><span class="p">(</span><span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">low</span> <span class="o">=</span> <span class="mf">15.0</span><span class="p">;</span>
+    <span class="n">const</span> <span class="nb">float</span> <span class="n">high</span> <span class="o">=</span> <span class="mf">90.0</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">,</span> <span class="n">low</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">device</span><span class="p">,</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">temp</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">width</span><span class="p">,</span> <span class="n">high</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">temp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">16777216</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+
+    <span class="n">auto</span> <span class="n">begin</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">means</span> <span class="o">=</span> <span class="n">row_temperatures_mean</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">temp</span><span class="p">);</span>
+    <span class="n">auto</span> <span class="n">end</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">high_resolution_clock</span><span class="p">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">seconds</span> <span class="o">=</span> <span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">();</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">gigabytes</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span><span class="p">;</span>
+    <span class="n">const</span> <span class="n">double</span> <span class="n">throughput</span> <span class="o">=</span> <span class="n">gigabytes</span> <span class="o">/</span> <span class="n">seconds</span><span class="p">;</span>
+
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;computed in </span><span class="si">%g</span><span class="s2"> s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">);</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;achieved throughput: </span><span class="si">%g</span><span class="s2"> GB/s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">throughput</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/reduction-segmented-mean.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/reduction-segmented-mean-op.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span><span class="w"> </span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>computed in 0.00330412 s
+achieved throughput: 302.652 GB/s
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="sgemented-reduction-with-custom-binary-operator">
+<h3>Sgemented Reduction with Custom Binary Operator<a class="headerlink" href="#sgemented-reduction-with-custom-binary-operator" title="Link to this heading">#</a></h3>
+<p>In the following code, we show how to use custom binary operator in the segmented reduction.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">functor</span> <span class="p">{</span>
+    <span class="n">__host__</span> <span class="n">__device__</span> 
+    <span class="nb">float</span> <span class="n">operator</span><span class="p">()(</span><span class="nb">float</span> <span class="n">value_about_to_be_stored_in_output_sequence</span><span class="p">)</span> <span class="n">const</span> 
+    <span class="p">{</span> 
+        <span class="o">//</span> <span class="n">will</span> <span class="n">store</span> <span class="n">value</span> <span class="o">/</span> <span class="mi">2</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">output</span> <span class="n">sequence</span> <span class="n">instead</span> <span class="n">of</span> <span class="n">the</span> <span class="n">original</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">value_about_to_be_stored_in_output_sequence</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span> 
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">auto</span> <span class="n">transform_output_it</span> <span class="o">=</span> 
+    <span class="n">thrust</span><span class="p">::</span><span class="n">make_transform_output_iterator</span><span class="p">(</span>
+        <span class="o">//</span> <span class="n">iterator</span> <span class="n">to</span> <span class="n">the</span> <span class="n">beginning</span> <span class="n">of</span> <span class="n">the</span> <span class="n">output</span> <span class="n">sequence</span>
+        <span class="n">vector</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> 
+        <span class="o">//</span> <span class="n">functor</span> <span class="n">to</span> <span class="n">apply</span> <span class="n">to</span> <span class="n">value</span> <span class="n">before</span> <span class="n">it</span><span class="s1">&#39;s written to the `vector`</span>
+        <span class="n">functor</span><span class="p">{});</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="host-and-device-memory">
+<h2>Host and Device Memory<a class="headerlink" href="#host-and-device-memory" title="Link to this heading">#</a></h2>
+<p>Even though <code class="docutils literal notranslate"><span class="pre">thrust::universal_vector</span></code> can be used in both host and device, it is recommended to use <code class="docutils literal notranslate"><span class="pre">thrust::host_vector</span></code> and <code class="docutils literal notranslate"><span class="pre">thrust::device_vector</span></code> for better performance and memory management.</p>
+<p>When we use <code class="docutils literal notranslate"><span class="pre">thrust::universal_vector</span></code> alternatively on host and device, we need to synchronize the memory using <code class="docutils literal notranslate"><span class="pre">cudaDeviceSynchronize()</span></code> after each use on device or host to avoid undefined behavior which is implicitly required. This operation can be expensive and may lead to performance degradation.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">thrust</span><span class="o">::</span><span class="n">copy</span><span class="p">(</span><span class="n">src_vector</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">src_vector</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="n">dst_vector</span><span class="p">.</span><span class="n">begin</span><span class="p">());</span>
+</pre></div>
+</div>
 </section>
 </section>
 
@@ -610,7 +1505,22 @@ Unified memory is a memory management system that allows the CPU and GPU to shar
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-underlying-compilation">The underlying Compilation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#code-explanation">Code Explanation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#execution-policy-vs-specifier">Execution Policy vs Specifier</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#execution-policy-vs-specifier">Execution Policy vs Specifier</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-exercise-compute-median-temperature">Code exercise: Compute Median Temperature</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#thrust-fancy-iterators">Thrust fancy iterators</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tabulate">Tabulate</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cuda-std-mdspan-for-multi-dimensional-array-view"><code class="docutils literal notranslate"><span class="pre">cuda::std::mdspan</span></code> for multi-dimensional array view</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#serial-vs-parallel">Serial Vs Parallel</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#segmented-summarization">Segmented Summarization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgemented-mean">Sgemented Mean</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgemented-reduction-with-custom-binary-operator">Sgemented Reduction with Custom Binary Operator</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#host-and-device-memory">Host and Device Memory</a></li>
 </ul>
   </nav></div>
 
