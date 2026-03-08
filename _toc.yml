@@ -10,10 +10,9 @@ parts:
 
   - caption: CUDA From Scratch
     chapters:
-      - file: docs/1_cuda_from_scratch/start
       - file: docs/1_cuda_from_scratch/thread_memory_understanding
-      - file: docs/1_cuda_from_scratch/thrust_tutorial
-      - file: docs/1_cuda_from_scratch/thrust_tutorials
+      - file: docs/1_cuda_from_scratch/cuda_thrust
+      - file: docs/1_cuda_from_scratch/cuda_asynchronous
 
   - caption: LLM Cheatsheet
     chapters:
@@ -24,6 +23,7 @@ parts:
     chapters:
       - file: docs/3_basics_cplus/class
       - file: docs/3_basics_cplus/std_functions
+      - file: docs/3_basics_cplus/iterator
 
   - caption: Others
     chapters:
