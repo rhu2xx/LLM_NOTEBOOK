@@ -1,3 +1,15 @@
+## Profile
+
+```rust
+# Nsight Systems - 查看时间线
+nsys profile --force-overwrite true  -o report ./lesson03 
+nsys-ui report.nsys-rep
+
+# Nsight Compute - 详细kernel分析
+ncu --set full --force-overwrite true  -o report ./lesson03
+ncu-ui report.ncu-rep
+```
+
 ## Record Time
 
 ```cpp
