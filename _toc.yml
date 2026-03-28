@@ -13,6 +13,8 @@ parts:
       - file: docs/1_cuda_from_scratch/thread_memory_understanding
       - file: docs/1_cuda_from_scratch/cuda_thrust
       - file: docs/1_cuda_from_scratch/cuda_asynchronous
+      - file: docs/1_cuda_from_scratch/cuda_gdb
+      - file: docs/1_cuda_from_scratch/program_tool
 
   - caption: LLM Cheatsheet
     chapters:
