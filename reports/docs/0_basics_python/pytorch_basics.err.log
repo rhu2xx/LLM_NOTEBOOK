@@ -1,37 +1,87 @@
 Traceback (most recent call last):
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/nbclient/client.py", line 782, in _async_poll_for_reply
-    msg = await ensure_async(self.kc.shell_channel.get_msg(timeout=new_timeout))
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/jupyter_core/utils/__init__.py", line 214, in ensure_async
-    result = await obj
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/jupyter_client/channels.py", line 313, in get_msg
-    raise Empty
-_queue.Empty
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+  File "/home/huhu/miniconda3/envs/llm_toy/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
     executenb(
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/nbclient/client.py", line 1319, in execute
+  File "/home/huhu/miniconda3/envs/llm_toy/lib/python3.12/site-packages/nbclient/client.py", line 1324, in execute
     return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/huhu/miniconda3/envs/llm_toy/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
     return loop.run_until_complete(inner)
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/huhu/miniconda3/envs/llm_toy/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
     return future.result()
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/nbclient/client.py", line 709, in async_execute
+           ^^^^^^^^^^^^^^^
+  File "/home/huhu/miniconda3/envs/llm_toy/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
     await self.async_execute_cell(
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/nbclient/client.py", line 1005, in async_execute_cell
-    exec_reply = await self.task_poll_for_reply
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/nbclient/client.py", line 806, in _async_poll_for_reply
-    error_on_timeout_execute_reply = await self._async_handle_timeout(timeout, cell)
-  File "/data2/huhu_data/anaconda3/envs/llm/lib/python3.10/site-packages/nbclient/client.py", line 856, in _async_handle_timeout
-    raise CellTimeoutError.error_from_timeout_and_cell(
-nbclient.exceptions.CellTimeoutError: A cell timed out while it was being executed, after 30 seconds.
-The message was: Cell execution timed out.
-Here is a preview of the cell contents:
--------------------
-['import torch', 'from torch.utils.data import Dataset', 'from torchvision import datasets', 'from torchvision.transforms import ToTensor', 'import matplotlib.pyplot as plt']
-...
-['    root="data",', '    train=False,', '    download=True,', '    transform=ToTensor()', ')']
--------------------
+  File "/home/huhu/miniconda3/envs/llm_toy/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/huhu/miniconda3/envs/llm_toy/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+import torch
+from torch.utils.data import Dataset
+from torchvision import datasets
+from torchvision.transforms import ToTensor
+import matplotlib.pyplot as plt
+
+
+training_data = datasets.FashionMNIST(
+    root="/data2/huhu_data/download",
+    train=True,
+    download=True,
+    transform=ToTensor()
+)
+
+test_data = datasets.FashionMNIST(
+    root="data",
+    train=False,
+    download=True,
+    transform=ToTensor()
+)
+------------------
+
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mPermissionError[0m                           Traceback (most recent call last)
+Cell [0;32mIn[5], line 8[0m
+[1;32m      4[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01mtorchvision[39;00m[38;5;21;01m.[39;00m[38;5;21;01mtransforms[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ToTensor
+[1;32m      5[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01mmatplotlib[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpyplot[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[38;5;21;01mplt[39;00m
+[0;32m----> 8[0m training_data [38;5;241m=[39m datasets[38;5;241m.[39mFashionMNIST(
+[1;32m      9[0m     root[38;5;241m=[39m[38;5;124m"[39m[38;5;124m/data2/huhu_data/download[39m[38;5;124m"[39m,
+[1;32m     10[0m     train[38;5;241m=[39m[38;5;28;01mTrue[39;00m,
+[1;32m     11[0m     download[38;5;241m=[39m[38;5;28;01mTrue[39;00m,
+[1;32m     12[0m     transform[38;5;241m=[39mToTensor()
+[1;32m     13[0m )
+[1;32m     15[0m test_data [38;5;241m=[39m datasets[38;5;241m.[39mFashionMNIST(
+[1;32m     16[0m     root[38;5;241m=[39m[38;5;124m"[39m[38;5;124mdata[39m[38;5;124m"[39m,
+[1;32m     17[0m     train[38;5;241m=[39m[38;5;28;01mFalse[39;00m,
+[1;32m     18[0m     download[38;5;241m=[39m[38;5;28;01mTrue[39;00m,
+[1;32m     19[0m     transform[38;5;241m=[39mToTensor()
+[1;32m     20[0m )
+
+File [0;32m~/miniconda3/envs/llm_toy/lib/python3.12/site-packages/torchvision/datasets/mnist.py:100[0m, in [0;36mMNIST.__init__[0;34m(self, root, train, transform, target_transform, download)[0m
+[1;32m     97[0m     [38;5;28;01mreturn[39;00m
+[1;32m     99[0m [38;5;28;01mif[39;00m download:
+[0;32m--> 100[0m     [38;5;28mself[39m[38;5;241m.[39mdownload()
+[1;32m    102[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m [38;5;28mself[39m[38;5;241m.[39m_check_exists():
+[1;32m    103[0m     [38;5;28;01mraise[39;00m [38;5;167;01mRuntimeError[39;00m([38;5;124m"[39m[38;5;124mDataset not found. You can use download=True to download it[39m[38;5;124m"[39m)
+
+File [0;32m~/miniconda3/envs/llm_toy/lib/python3.12/site-packages/torchvision/datasets/mnist.py:180[0m, in [0;36mMNIST.download[0;34m(self)[0m
+[1;32m    177[0m [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39m_check_exists():
+[1;32m    178[0m     [38;5;28;01mreturn[39;00m
+[0;32m--> 180[0m os[38;5;241m.[39mmakedirs([38;5;28mself[39m[38;5;241m.[39mraw_folder, exist_ok[38;5;241m=[39m[38;5;28;01mTrue[39;00m)
+[1;32m    182[0m [38;5;66;03m# download files[39;00m
+[1;32m    183[0m [38;5;28;01mfor[39;00m filename, md5 [38;5;129;01min[39;00m [38;5;28mself[39m[38;5;241m.[39mresources:
+
+File [0;32m<frozen os>:215[0m, in [0;36mmakedirs[0;34m(name, mode, exist_ok)[0m
+
+File [0;32m<frozen os>:215[0m, in [0;36mmakedirs[0;34m(name, mode, exist_ok)[0m
+
+    [0;31m[... skipping similar frames: makedirs at line 215 (1 times)][0m
+
+File [0;32m<frozen os>:215[0m, in [0;36mmakedirs[0;34m(name, mode, exist_ok)[0m
+
+File [0;32m<frozen os>:225[0m, in [0;36mmakedirs[0;34m(name, mode, exist_ok)[0m
+
+[0;31mPermissionError[0m: [Errno 13] Permission denied: '/data2'
 

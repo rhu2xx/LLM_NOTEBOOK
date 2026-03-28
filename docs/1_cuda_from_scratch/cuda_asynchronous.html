@@ -1,0 +1,885 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How to asynchronously run and profile a CUDA program &#8212; My LLM Notebook</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css?v=8cd3d715" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/1_cuda_from_scratch/cuda_asynchronous';</script>
+    <link rel="icon" href="https://github.com/rhu2xx/picx-images-hosting/raw/master/20251021/cat_eye.4xuxugatot.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="CUDA-gdb" href="cuda_gdb.html" />
+    <link rel="prev" title="How to use STL-style CUDA programming" href="cuda_thrust.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../intro.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="https://github.com/rhu2xx/picx-images-hosting/raw/master/20251014/nyancat_big.2h8p5jybeh.gif" class="logo__image only-light" alt="My LLM Notebook - Home"/>
+    <img src="https://github.com/rhu2xx/picx-images-hosting/raw/master/20251014/nyancat_big.2h8p5jybeh.gif" class="logo__image only-dark pst-js-only" alt="My LLM Notebook - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../intro.html">
+                    Welcome to MY NoteBook for everything!
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Python Basics</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch.html">Pytorch Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch_basics.html">Pytorch Basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../0_basics_python/pytorch_internals.html">Pytorch internals</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">CUDA From Scratch</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="thread_memory_understanding.html">Cuda Memory Hierarchy and Thread Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cuda_thrust.html">How to use STL-style CUDA programming</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">How to asynchronously run and profile a CUDA program</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cuda_gdb.html">CUDA-gdb</a></li>
+<li class="toctree-l1"><a class="reference internal" href="program_tool.html">GPU Profile</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LLM Cheatsheet</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/NN_Fundamentals.html">Neural Network Fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../2_LLM_cheatsheet/Deep_dive_into_LLMs.html">Depp dive into LLMs</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">C++ Basics</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/class.html">Modern C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/std_functions.html">Random Notes for Modern C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/iterator.html"><a id="toc1_"></a><span class="xref myst">Pointers Vs Iterators</span></a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Others</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../others/torch.scatter%26gather.html">torch.scatter_reduce_ and torch.gather</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../others/coroutine.html">Coroutine and thread</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../others/mpi_tutorial.html">MPI message passing Interface tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../others/causal_discovery.html">The introduction of Double Machine Learning</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/rhu2xx/LLM_NOTEBOOK" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/rhu2xx/LLM_NOTEBOOK/issues/new?title=Issue%20on%20page%20%2Fdocs/1_cuda_from_scratch/cuda_asynchronous.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/docs/1_cuda_from_scratch/cuda_asynchronous.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>How to asynchronously run and profile a CUDA program</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-link-cub-and-nvtx-library">How to link cub and nvtx library</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="how-to-asynchronously-run-and-profile-a-cuda-program">
+<h1>How to asynchronously run and profile a CUDA program<a class="headerlink" href="#how-to-asynchronously-run-and-profile-a-cuda-program" title="Link to this heading">#</a></h1>
+<section id="how-to-link-cub-and-nvtx-library">
+<h2>How to link cub and nvtx library<a class="headerlink" href="#how-to-link-cub-and-nvtx-library" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/cuda/bin:&quot;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>I found even my <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> version is 12.4. Some header files are still not included. So it’s better to install the cccl package via conda.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>cccl
+conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>nvtx
+
+
+
+ln<span class="w"> </span>-s<span class="w"> </span><span class="nv">$CONDA_PREFIX</span>/include/cccl/cub<span class="w"> </span>cub
+ln<span class="w"> </span>-s<span class="w"> </span><span class="nv">$CONDA_PREFIX</span>/include/cccl/thrust<span class="w"> </span>thrust
+ln<span class="w"> </span>-s<span class="w"> </span><span class="nv">$CONDA_PREFIX</span>/include/cccl/cuda<span class="w"> </span>cuda
+ln<span class="w"> </span>-s<span class="w"> </span><span class="nv">$CONDA_PREFIX</span>/include/cccl/nv<span class="w"> </span>nv
+</pre></div>
+</div>
+<p>When we compile the CUDA program with <code class="docutils literal notranslate"><span class="pre">nvcc</span></code>,
+error:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nvcc<span class="w">  </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/nvtx.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>
+</pre></div>
+</div>
+<p>correct:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nvcc<span class="w"> </span>-I<span class="nv">$CONDA_PREFIX</span>/include<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/nvtx.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>
+</pre></div>
+</div>
+<p><strong>overlap</strong>: to make two or more things happen at the same time.</p>
+<p>In cuda, asynchronous execution means that the CPU can continue executing other code while the GPU is busy processing data. This allows for better utilization of both the CPU and GPU, leading to improved performance in applications that require heavy computation.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cub::DeviceTransform::Transform</span></code> : A function from the CUB library that performs transformations on device data asynchronously.</p>
+<p>API</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">cub</span><span class="o">::</span><span class="n">DeviceTransform</span><span class="o">::</span><span class="n">Transform</span><span class="p">(</span><span class="n">input_iterator</span><span class="p">,</span><span class="w"> </span><span class="n">output_iterator</span><span class="p">,</span><span class="w"> </span><span class="n">num_items</span><span class="p">,</span><span class="w"> </span><span class="n">op</span><span class="p">,</span><span class="w"> </span><span class="n">stream</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/nvtx.cpp
+
+<span class="c1">#include &lt;fstream&gt;</span>
+<span class="c1">#include &lt;thrust/fill.h&gt;</span>
+<span class="c1">#include &lt;thrust/device_vector.h&gt;</span>
+<span class="c1">#include &lt;thrust/host_vector.h&gt;</span>
+<span class="c1">#include &lt;cuda/std/mdspan&gt;</span>
+<span class="c1">#include &lt;nvtx3.hpp&gt;</span>
+<span class="c1">#include &lt;cub/device/device_transform.cuh&gt;</span>
+
+
+<span class="n">void</span> <span class="n">simulate</span><span class="p">(</span><span class="nb">int</span> <span class="n">width</span><span class="p">,</span> <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="ow">in</span><span class="p">,</span> <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">cuda</span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">mdspan</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="ow">in</span><span class="o">.</span><span class="n">data</span><span class="p">()),</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+
+    <span class="n">cub</span><span class="p">::</span><span class="n">DeviceTransform</span><span class="p">::</span><span class="n">Transform</span><span class="p">(</span> 
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_counting_iterator</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>
+        <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">,</span>
+        <span class="p">[</span><span class="o">=</span><span class="p">]</span> <span class="n">__device__</span> <span class="n">__host__</span> <span class="p">(</span><span class="nb">int</span> <span class="nb">id</span><span class="p">){</span>
+            <span class="nb">int</span> <span class="n">row</span> <span class="o">=</span> <span class="nb">id</span> <span class="o">/</span> <span class="n">width</span><span class="p">;</span>
+            <span class="nb">int</span> <span class="n">column</span> <span class="o">=</span> <span class="nb">id</span> <span class="o">%</span> <span class="n">width</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">row</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">column</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">column</span> <span class="o">&lt;</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nb">float</span> <span class="n">d2tdx2</span> <span class="o">=</span>
+                    <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span> <span class="o">+</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+                <span class="nb">float</span> <span class="n">d2tdy2</span> <span class="o">=</span>
+                    <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span> <span class="o">+</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="p">);</span>
+
+                <span class="k">return</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.2</span><span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">d2tdx2</span> <span class="o">+</span> <span class="n">d2tdy2</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">init</span><span class="p">(</span><span class="nb">int</span> <span class="n">width</span><span class="p">,</span> <span class="nb">int</span> <span class="n">height</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">d_prev</span><span class="p">(</span><span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">,</span> <span class="mf">15.0</span><span class="n">f</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill_n</span><span class="p">(</span><span class="n">d_prev</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">width</span><span class="p">,</span> <span class="mf">90.0</span><span class="n">f</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill_n</span><span class="p">(</span><span class="n">d_prev</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">width</span> <span class="o">*</span> <span class="p">(</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">width</span><span class="p">,</span> <span class="mf">90.0</span><span class="n">f</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">d_prev</span><span class="p">;</span>
+    
+<span class="p">}</span>
+
+<span class="n">template</span> <span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">ContainerT</span><span class="o">&gt;</span>
+<span class="n">void</span> <span class="n">store</span><span class="p">(</span><span class="nb">int</span> <span class="n">step</span><span class="p">,</span> <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span> <span class="n">ContainerT</span> <span class="o">&amp;</span><span class="n">data</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">ofstream</span> <span class="n">file</span><span class="p">(</span><span class="s2">&quot;/tmp/heat_&quot;</span> <span class="o">+</span> <span class="n">std</span><span class="p">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">step</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.bin&quot;</span><span class="p">,</span> <span class="n">std</span><span class="p">::</span><span class="n">ios</span><span class="p">::</span><span class="n">binary</span><span class="p">);</span>
+    <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">const</span> <span class="n">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">height</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">int</span><span class="p">));</span>
+    <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">const</span> <span class="n">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">width</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">int</span><span class="p">));</span>
+    <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">const</span> <span class="n">char</span> <span class="o">*&gt;</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">())),</span> <span class="n">height</span> <span class="o">*</span> <span class="n">width</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(){</span>
+    <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">8192</span><span class="p">;</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">d_prev</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">d_next</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">host_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">h_prev</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">);</span>
+    <span class="n">const</span> <span class="nb">int</span> <span class="n">compute_steps</span> <span class="o">=</span> <span class="mi">750</span><span class="p">;</span>
+    <span class="n">const</span> <span class="nb">int</span> <span class="n">write_steps</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">write_step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">write_step</span> <span class="o">&lt;</span> <span class="n">write_steps</span><span class="p">;</span> <span class="n">write_step</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="n">std</span><span class="p">::</span><span class="n">string</span><span class="p">(</span><span class="s2">&quot;write step &quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">std</span><span class="p">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">write_step</span><span class="p">)};</span>
+
+        <span class="p">{</span>
+            <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;copy&quot;</span><span class="p">};</span>
+            <span class="n">thrust</span><span class="p">::</span><span class="n">copy</span><span class="p">(</span><span class="n">d_prev</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">d_prev</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">h_prev</span><span class="o">.</span><span class="n">begin</span><span class="p">());</span>
+        <span class="p">}</span>
+
+        <span class="p">{</span>
+            <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;compute&quot;</span><span class="p">};</span>
+            <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">compute_step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">compute_step</span> <span class="o">&lt;</span> <span class="n">compute_steps</span><span class="p">;</span> <span class="n">compute_step</span><span class="o">++</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="o">//</span> <span class="n">Even</span> <span class="n">though</span> <span class="n">the</span> <span class="n">simulate</span> <span class="n">function</span> <span class="ow">is</span> <span class="n">called</span> <span class="n">asynchronously</span><span class="p">,</span> <span class="err">`</span><span class="n">swap</span><span class="err">`</span> <span class="n">will</span> <span class="ow">not</span> <span class="n">fall</span> <span class="n">into</span> <span class="n">the</span> <span class="n">data</span> <span class="n">race</span><span class="o">.</span> <span class="n">Because</span> <span class="n">eveything</span> <span class="ow">is</span> <span class="n">serialized</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">single</span> <span class="n">default</span> <span class="n">stream</span><span class="o">.</span>
+                <span class="n">simulate</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">d_prev</span><span class="p">,</span> <span class="n">d_next</span><span class="p">);</span>
+                <span class="n">d_prev</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="n">d_next</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="p">{</span>
+            <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;write&quot;</span><span class="p">};</span>
+            <span class="n">store</span><span class="p">(</span><span class="n">write_step</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">h_prev</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="p">{</span>
+            <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;wait&quot;</span><span class="p">};</span>
+            <span class="n">cudaDeviceSynchronize</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/nvtx.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>-I<span class="w"> </span><span class="nv">$CONDA_PREFIX</span>/include<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/nvtx.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span>nsys<span class="w"> </span>profile<span class="w"> </span>--force-overwrite<span class="w"> </span><span class="nb">true</span><span class="w"> </span>-o<span class="w"> </span>nvtx<span class="w"> </span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>and<span class="w"> </span>profile<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Generating &#39;/tmp/nsys-report-f169.qdstrm&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [0%                          ] nvtx.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [0%                          ] nvtx.nsys-rep
+[1/1] [9%                          ] nvtx.nsys-rep
+[1/1] [==20%                       ] nvtx.nsys-rep
+[1/1] [=====30%                    ] nvtx.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [=====31%                    ] nvtx.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [=====32%                    ] nvtx.nsys-rep
+[1/1] [======35%                   ] nvtx.nsys-rep
+[1/1] [=======38%                  ] nvtx.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [========42%                 ] nvtx.nsys-rep
+[1/1] [===========51%              ] nvtx.nsys-rep
+[1/1] [===================80%      ] nvtx.nsys-rep
+[1/1] [=====================86%    ] nvtx.nsys-rep
+[1/1] [========================100%] nvtx.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [========================100%] nvtx.nsys-rep
+Generated:
+    /home/huhu/LLM_NOTEBOOK/docs/1_cuda_from_scratch/nvtx.nsys-rep
+</pre></div>
+</div>
+</div>
+</div>
+<img src="https://github.com/rhu2xx/picx-images-hosting/raw/master/20260202/image.8adrsvcymy.webp" style="width:90%;"><p>Right now, the simulator:</p>
+<ol class="arabic simple">
+<li><p>synchronously copies data from GPU to CPU.</p></li>
+<li><p>overlaps computation and I/O to some extent.</p></li>
+<li><p>Waits for the copy to finish.</p></li>
+</ol>
+<p>End till now, the overlap only happens between computation and I/O. The data copy is still synchronous. We use <code class="docutils literal notranslate"><span class="pre">cudaMemcpyAsync</span></code> to replace <code class="docutils literal notranslate"><span class="pre">thrust::copy</span></code> for asynchronous copy.
+But if we only use <code class="docutils literal notranslate"><span class="pre">cudaMemcpyAsync</span></code>, the overlap will not happen. Because the default stream is used. All operations in the default stream are serialized. To achieve true overlap, we need to use multiple streams.</p>
+<p>API</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">cudaMemcpyAsync</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">dst</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">count_byte</span><span class="p">,</span><span class="w"> </span><span class="n">cudaMemcpyKind</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">cudaStream_t</span><span class="w"> </span><span class="n">stream</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%writefile</span> Sources/async-copy.cpp
+
+<span class="c1">#include &lt;fstream&gt;</span>
+<span class="c1">#include &lt;thrust/fill.h&gt;</span>
+<span class="c1">#include &lt;thrust/device_vector.h&gt;</span>
+<span class="c1">#include &lt;thrust/host_vector.h&gt;</span>
+<span class="c1">#include &lt;cuda/std/mdspan&gt;</span>
+<span class="c1">#include &quot;nvtx3.hpp&quot;</span>
+<span class="c1">#include &lt;cub/device/device_transform.cuh&gt;</span>
+
+
+<span class="n">void</span> <span class="n">simulate</span><span class="p">(</span><span class="nb">int</span> <span class="n">width</span><span class="p">,</span> <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="n">const</span> <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="ow">in</span><span class="p">,</span> <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">,</span> <span class="n">cudaStream_t</span> <span class="n">stream</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">cuda</span><span class="p">::</span><span class="n">std</span><span class="p">::</span><span class="n">mdspan</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="ow">in</span><span class="o">.</span><span class="n">data</span><span class="p">()),</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">);</span>
+
+    <span class="n">cub</span><span class="p">::</span><span class="n">DeviceTransform</span><span class="p">::</span><span class="n">Transform</span><span class="p">(</span> 
+        <span class="n">thrust</span><span class="p">::</span><span class="n">make_counting_iterator</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span>
+        <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">,</span>
+        <span class="p">[</span><span class="o">=</span><span class="p">]</span> <span class="n">__device__</span> <span class="n">__host__</span> <span class="p">(</span><span class="nb">int</span> <span class="nb">id</span><span class="p">){</span>
+            <span class="nb">int</span> <span class="n">row</span> <span class="o">=</span> <span class="nb">id</span> <span class="o">/</span> <span class="n">width</span><span class="p">;</span>
+            <span class="nb">int</span> <span class="n">column</span> <span class="o">=</span> <span class="nb">id</span> <span class="o">%</span> <span class="n">width</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">row</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">column</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="n">height</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">column</span> <span class="o">&lt;</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nb">float</span> <span class="n">d2tdx2</span> <span class="o">=</span>
+                    <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span> <span class="o">+</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+                <span class="nb">float</span> <span class="n">d2tdy2</span> <span class="o">=</span>
+                    <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span> <span class="o">+</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="p">);</span>
+
+                <span class="k">return</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.2</span><span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">d2tdx2</span> <span class="o">+</span> <span class="n">d2tdy2</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="n">temp_in</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="n">stream</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">init</span><span class="p">(</span><span class="nb">int</span> <span class="n">width</span><span class="p">,</span> <span class="nb">int</span> <span class="n">height</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">d_prev</span><span class="p">(</span><span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">,</span> <span class="mf">15.0</span><span class="n">f</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill_n</span><span class="p">(</span><span class="n">d_prev</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">width</span><span class="p">,</span> <span class="mf">90.0</span><span class="n">f</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">fill_n</span><span class="p">(</span><span class="n">d_prev</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">width</span> <span class="o">*</span> <span class="p">(</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">width</span><span class="p">,</span> <span class="mf">90.0</span><span class="n">f</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">d_prev</span><span class="p">;</span>
+    
+<span class="p">}</span>
+
+<span class="n">template</span> <span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">ContainerT</span><span class="o">&gt;</span>
+<span class="n">void</span> <span class="n">store</span><span class="p">(</span><span class="nb">int</span> <span class="n">step</span><span class="p">,</span> <span class="nb">int</span> <span class="n">height</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span> <span class="n">ContainerT</span> <span class="o">&amp;</span><span class="n">data</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">ofstream</span> <span class="n">file</span><span class="p">(</span><span class="s2">&quot;/tmp/heat_&quot;</span> <span class="o">+</span> <span class="n">std</span><span class="p">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">step</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.bin&quot;</span><span class="p">,</span> <span class="n">std</span><span class="p">::</span><span class="n">ios</span><span class="p">::</span><span class="n">binary</span><span class="p">);</span>
+    <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">const</span> <span class="n">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">height</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">int</span><span class="p">));</span>
+    <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">const</span> <span class="n">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">width</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">int</span><span class="p">));</span>
+    <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">const</span> <span class="n">char</span> <span class="o">*&gt;</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">())),</span> <span class="n">height</span> <span class="o">*</span> <span class="n">width</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(){</span>
+    <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">8192</span><span class="p">;</span>
+
+    <span class="n">cudaStream_t</span> <span class="n">compute_stream</span><span class="p">;</span>
+    <span class="n">cudaStreamCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">compute_stream</span><span class="p">);</span>
+
+    <span class="n">cudaStream_t</span> <span class="n">copy_stream</span><span class="p">;</span>
+    <span class="n">cudaStreamCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">copy_stream</span><span class="p">);</span>
+
+    <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">d_prev</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">d_buffer</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">d_next</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">);</span>
+    <span class="n">thrust</span><span class="p">::</span><span class="n">host_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">h_prev</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">);</span>
+    <span class="n">const</span> <span class="nb">int</span> <span class="n">compute_steps</span> <span class="o">=</span> <span class="mi">750</span><span class="p">;</span>
+    <span class="n">const</span> <span class="nb">int</span> <span class="n">write_steps</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">write_step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">write_step</span> <span class="o">&lt;</span> <span class="n">write_steps</span><span class="p">;</span> <span class="n">write_step</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="n">std</span><span class="p">::</span><span class="n">string</span><span class="p">(</span><span class="s2">&quot;write step &quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">std</span><span class="p">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">write_step</span><span class="p">)};</span>
+
+        <span class="p">{</span>
+            <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;copy&quot;</span><span class="p">};</span>
+            <span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">d_buffer</span><span class="o">.</span><span class="n">data</span><span class="p">()),</span> <span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">d_prev</span><span class="o">.</span><span class="n">data</span><span class="p">()),</span> <span class="n">d_prev</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">cudaMemcpyDeviceToDevice</span><span class="p">);</span>
+            <span class="n">cudaMemcpyAsync</span><span class="p">(</span><span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">h_prev</span><span class="o">.</span><span class="n">data</span><span class="p">()),</span> <span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">d_buffer</span><span class="o">.</span><span class="n">data</span><span class="p">()),</span> <span class="n">d_prev</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">cudaMemcpyDeviceToHost</span><span class="p">,</span> <span class="n">copy_stream</span><span class="p">);</span>
+
+        <span class="p">}</span>
+
+        <span class="p">{</span>
+            <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;compute&quot;</span><span class="p">};</span>
+            <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">compute_step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">compute_step</span> <span class="o">&lt;</span> <span class="n">compute_steps</span><span class="p">;</span> <span class="n">compute_step</span><span class="o">++</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="o">//</span> <span class="n">Read</span><span class="o">-</span><span class="n">Write</span> <span class="n">conflict</span> <span class="n">will</span> <span class="ow">not</span> <span class="n">happen</span><span class="o">.</span> 
+                <span class="n">simulate</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">d_prev</span><span class="p">,</span> <span class="n">d_next</span><span class="p">,</span> <span class="n">compute_stream</span><span class="p">);</span>
+                <span class="n">d_prev</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="n">d_next</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="p">{</span>
+            <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;write&quot;</span><span class="p">};</span>
+            <span class="n">cudaStreamSynchronize</span><span class="p">(</span><span class="n">copy_stream</span><span class="p">);</span>
+            <span class="n">store</span><span class="p">(</span><span class="n">write_step</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">h_prev</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="p">{</span>
+            <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;wait&quot;</span><span class="p">};</span>
+            <span class="n">cudaStreamSynchronize</span><span class="p">(</span><span class="n">compute_stream</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">cudaStreamDestroy</span><span class="p">(</span><span class="n">compute_stream</span><span class="p">);</span>
+    <span class="n">cudaStreamDestroy</span><span class="p">(</span><span class="n">copy_stream</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Overwriting Sources/async-copy.cpp
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>nvcc<span class="w"> </span>-I<span class="nv">$CONDA_PREFIX</span>/include<span class="w"> </span>--extended-lambda<span class="w"> </span>-o<span class="w"> </span>/tmp/a.out<span class="w"> </span>Sources/async-copy.cpp<span class="w"> </span>-x<span class="w"> </span>cu<span class="w"> </span>-arch<span class="o">=</span>native<span class="w"> </span>#<span class="w"> </span>build<span class="w"> </span>executable
+<span class="o">!</span>nsys<span class="w"> </span>profile<span class="w"> </span>--force-overwrite<span class="w"> </span><span class="nb">true</span><span class="w"> </span>-o<span class="w"> </span>nvtx-async<span class="w"> </span>/tmp/a.out<span class="w"> </span>#<span class="w"> </span>run<span class="w"> </span>and<span class="w"> </span>profile<span class="w"> </span>executable
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Generating &#39;/tmp/nsys-report-66b8.qdstrm&#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [0%                          ] nvtx-async.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [0%                          ] nvtx-async.nsys-rep
+[1/1] [8%                          ] nvtx-async.nsys-rep
+[1/1] [==19%                       ] nvtx-async.nsys-rep
+[1/1] [=====29%                    ] nvtx-async.nsys-rep
+[1/1] [=====30%                    ] nvtx-async.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [=====31%                    ] nvtx-async.nsys-rep
+[1/1] [=====32%                    ] nvtx-async.nsys-rep
+[1/1] [======34%                   ] nvtx-async.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [=======37%                  ] nvtx-async.nsys-rep
+[1/1] [========42%                 ] nvtx-async.nsys-rep
+[1/1] [===========51%              ] nvtx-async.nsys-rep
+[1/1] [=============59%            ] nvtx-async.nsys-rep
+[1/1] [===================79%      ] nvtx-async.nsys-rep
+[1/1] [=====================86%    ] nvtx-async.nsys-rep
+[1/1] [========================100%] nvtx-async.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [========================100%] nvtx-async.nsys-rep
+Generated:
+    /home/huhu/LLM_NOTEBOOK/docs/1_cuda_from_scratch/nvtx-async.nsys-rep
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./docs/1_cuda_from_scratch"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="cuda_thrust.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">How to use STL-style CUDA programming</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="cuda_gdb.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">CUDA-gdb</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-link-cub-and-nvtx-library">How to link cub and nvtx library</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Ronnie
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
