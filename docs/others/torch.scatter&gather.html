@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css?v=8cd3d715" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -65,7 +65,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Coroutine and thread" href="coroutine.html" />
-    <link rel="prev" title="Pointers Vs Iterators" href="../3_basics_cplus/iterator.html" />
+    <link rel="prev" title="Polymorphism" href="../3_basics_cplus/Polymorphism.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -192,8 +192,8 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/class.html">Modern C++</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/std_functions.html">Random Notes for Modern C++</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/iterator.html"><a id="toc1_"></a><span class="xref myst">Pointers Vs Iterators</span></a></li>
-
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/iterator.html">Pointers Vs Iterators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/Polymorphism.html">Polymorphism</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Others</span></p>
 <ul class="current nav bd-sidenav">
@@ -556,15 +556,15 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[[ 2,  5,  5,  4,  4],
-         [12,  0,  0,  1,  7],
-         [ 4,  8,  4,  3,  1],
-         [ 2,  2,  2,  9,  5]],
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tensor([[[ 3,  3,  6,  6,  2],
+         [10,  2,  3,  2,  3],
+         [ 5,  4,  6,  2,  3],
+         [ 5,  6,  7,  1,  1]],
 
-        [[ 4,  8,  8,  0,  0],
-         [ 3,  5,  6,  2,  4],
-         [ 6,  8,  2,  4,  0],
-         [ 2,  6,  4,  5,  3]]])
+        [[ 6,  4,  3,  0,  7],
+         [ 5,  3,  5,  6,  1],
+         [ 2,  2,  7,  6,  3],
+         [ 5,  2,  6,  5,  2]]])
 </pre></div>
 </div>
 </div>
@@ -603,12 +603,12 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../3_basics_cplus/iterator.html"
+       href="../3_basics_cplus/Polymorphism.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title"><a id='toc1_'></a><span class="xref myst">Pointers Vs Iterators</span></p>
+        <p class="prev-next-title">Polymorphism</p>
       </div>
     </a>
     <a class="right-next"

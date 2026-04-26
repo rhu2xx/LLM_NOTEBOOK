@@ -63,7 +63,7 @@ public:
     explicit BankAccount(std::string name, double initial_deposit): owner{std::move(name)}, balance{initial_deposit} {
         log.push_back("Account created for " + owner);
     }
-
+    
 }
 
 

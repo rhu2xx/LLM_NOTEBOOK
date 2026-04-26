@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css?v=8cd3d715" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -192,8 +192,8 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/class.html">Modern C++</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/std_functions.html">Random Notes for Modern C++</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/iterator.html"><a id="toc1_"></a><span class="xref myst">Pointers Vs Iterators</span></a></li>
-
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/iterator.html">Pointers Vs Iterators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/Polymorphism.html">Polymorphism</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Others</span></p>
 <ul class="nav bd-sidenav">
@@ -695,18 +695,18 @@ Unified memory is a memory management system that allows the CPU and GPU to shar
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>	Command being timed: &quot;./temp/a.out&quot;
 	User time (seconds): 0.01
-	System time (seconds): 0.13
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.15
+	System time (seconds): 0.12
+	Percent of CPU this job got: 98%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.14
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 107104
+	Maximum resident set size (kbytes): 106860
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 3
-	Minor (reclaiming a frame) page faults: 5597
-	Voluntary context switches: 53
+	Minor (reclaiming a frame) page faults: 5579
+	Voluntary context switches: 52
 	Involuntary context switches: 2
 	Swaps: 0
 	File system inputs: 0
@@ -812,7 +812,7 @@ The original step should be</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>iterators are 82.3333 times faster than naive approach
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>iterators are 81 times faster than naive approach
 </pre></div>
 </div>
 </div>
@@ -994,7 +994,7 @@ We use transform to compute the reduction of each row (segment) one by one.</p>
     <span class="o">//</span> <span class="n">allocate</span> <span class="n">vector</span> <span class="n">to</span> <span class="n">store</span> <span class="n">sums</span>
     <span class="n">thrust</span><span class="p">::</span><span class="n">universal_vector</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span> <span class="n">sums</span><span class="p">(</span><span class="n">height</span><span class="p">);</span>
 
-    <span class="o">//</span> <span class="n">take</span> <span class="n">raw</span> <span class="n">pointer</span> <span class="n">to</span> <span class="err">`</span><span class="n">temp</span><span class="err">`</span>
+    <span class="o">//</span> <span class="n">take</span> <span class="n">raw</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">temp</span>
     <span class="n">const</span> <span class="nb">float</span> <span class="o">*</span><span class="n">d_temp_ptr</span> <span class="o">=</span> <span class="n">thrust</span><span class="p">::</span><span class="n">raw_pointer_cast</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">data</span><span class="p">());</span>
 
     <span class="o">//</span> <span class="n">compute</span> <span class="n">row</span> <span class="nb">sum</span>
@@ -1330,7 +1330,7 @@ achieved throughput: 238.983 GB/s
 
 <span class="n">struct</span> <span class="n">mean_functor</span> <span class="p">{</span>
     <span class="nb">int</span> <span class="n">width</span><span class="p">;</span>
-    <span class="o">//</span><span class="err">!</span> <span class="err">`</span><span class="p">()</span><span class="err">`</span> <span class="p">:</span> 
+    <span class="o">//</span> <span class="n">operator</span><span class="p">()</span>
     <span class="n">__host__</span> <span class="n">__device__</span> <span class="nb">float</span> <span class="n">operator</span><span class="p">()(</span><span class="nb">float</span> <span class="nb">sum</span><span class="p">)</span> <span class="n">const</span> <span class="p">{</span>
         <span class="k">return</span> <span class="nb">sum</span> <span class="o">/</span> <span class="n">width</span><span class="p">;</span>
     <span class="p">}</span>

@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css?v=8cd3d715" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -192,8 +192,8 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/class.html">Modern C++</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/std_functions.html">Random Notes for Modern C++</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/iterator.html"><a id="toc1_"></a><span class="xref myst">Pointers Vs Iterators</span></a></li>
-
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/iterator.html">Pointers Vs Iterators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../3_basics_cplus/Polymorphism.html">Polymorphism</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Others</span></p>
 <ul class="nav bd-sidenav">
@@ -521,7 +521,7 @@ error:</p>
             <span class="n">nvtx3</span><span class="p">::</span><span class="n">scoped_range</span> <span class="n">r</span><span class="p">{</span><span class="s2">&quot;compute&quot;</span><span class="p">};</span>
             <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">compute_step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">compute_step</span> <span class="o">&lt;</span> <span class="n">compute_steps</span><span class="p">;</span> <span class="n">compute_step</span><span class="o">++</span><span class="p">)</span>
             <span class="p">{</span>
-                <span class="o">//</span> <span class="n">Even</span> <span class="n">though</span> <span class="n">the</span> <span class="n">simulate</span> <span class="n">function</span> <span class="ow">is</span> <span class="n">called</span> <span class="n">asynchronously</span><span class="p">,</span> <span class="err">`</span><span class="n">swap</span><span class="err">`</span> <span class="n">will</span> <span class="ow">not</span> <span class="n">fall</span> <span class="n">into</span> <span class="n">the</span> <span class="n">data</span> <span class="n">race</span><span class="o">.</span> <span class="n">Because</span> <span class="n">eveything</span> <span class="ow">is</span> <span class="n">serialized</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">single</span> <span class="n">default</span> <span class="n">stream</span><span class="o">.</span>
+                <span class="o">//</span> <span class="n">Even</span> <span class="n">though</span> <span class="n">the</span> <span class="n">simulate</span> <span class="n">function</span> <span class="ow">is</span> <span class="n">called</span> <span class="n">asynchronously</span><span class="p">,</span> <span class="n">swap</span> <span class="n">will</span> <span class="ow">not</span> <span class="n">fall</span> <span class="n">into</span> <span class="n">a</span> <span class="n">data</span> <span class="n">race</span> <span class="n">because</span> <span class="n">everything</span> <span class="ow">is</span> <span class="n">serialized</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">single</span> <span class="n">default</span> <span class="n">stream</span><span class="o">.</span>
                 <span class="n">simulate</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">d_prev</span><span class="p">,</span> <span class="n">d_next</span><span class="p">);</span>
                 <span class="n">d_prev</span><span class="o">.</span><span class="n">swap</span><span class="p">(</span><span class="n">d_next</span><span class="p">);</span>
             <span class="p">}</span>
@@ -555,7 +555,7 @@ error:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Generating &#39;/tmp/nsys-report-f169.qdstrm&#39;
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Generating &#39;/tmp/nsys-report-073e.qdstrm&#39;
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [0%                          ] nvtx.nsys-rep
@@ -564,19 +564,14 @@ error:</p>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [0%                          ] nvtx.nsys-rep
 [1/1] [9%                          ] nvtx.nsys-rep
 [1/1] [==20%                       ] nvtx.nsys-rep
-[1/1] [=====30%                    ] nvtx.nsys-rep
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [=====31%                    ] nvtx.nsys-rep
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [=====32%                    ] nvtx.nsys-rep
-[1/1] [======35%                   ] nvtx.nsys-rep
-[1/1] [=======38%                  ] nvtx.nsys-rep
+[1/1] [======33%                   ] nvtx.nsys-rep
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [========42%                 ] nvtx.nsys-rep
-[1/1] [===========51%              ] nvtx.nsys-rep
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [======34%                   ] nvtx.nsys-rep
+[1/1] [========42%                 ] nvtx.nsys-rep
 [1/1] [===================80%      ] nvtx.nsys-rep
 [1/1] [=====================86%    ] nvtx.nsys-rep
 [1/1] [========================100%] nvtx.nsys-rep
@@ -724,30 +719,33 @@ But if we only use <code class="docutils literal notranslate"><span class="pre">
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Generating &#39;/tmp/nsys-report-66b8.qdstrm&#39;
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Generating &#39;/tmp/nsys-report-6a04.qdstrm&#39;
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [0%                          ] nvtx-async.nsys-rep
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [0%                          ] nvtx-async.nsys-rep
-[1/1] [8%                          ] nvtx-async.nsys-rep
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [9%                          ] nvtx-async.nsys-rep
 [1/1] [==19%                       ] nvtx-async.nsys-rep
 [1/1] [=====29%                    ] nvtx-async.nsys-rep
-[1/1] [=====30%                    ] nvtx-async.nsys-rep
+[1/1] [=====31%                    ] nvtx-async.nsys-rep
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [=====31%                    ] nvtx-async.nsys-rep
-[1/1] [=====32%                    ] nvtx-async.nsys-rep
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [======33%                   ] nvtx-async.nsys-rep
 [1/1] [======34%                   ] nvtx-async.nsys-rep
+[1/1] [=======36%                  ] nvtx-async.nsys-rep
+[1/1] [=======39%                  ] nvtx-async.nsys-rep
+[1/1] [=========44%                ] nvtx-async.nsys-rep
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [=======37%                  ] nvtx-async.nsys-rep
-[1/1] [========42%                 ] nvtx-async.nsys-rep
-[1/1] [===========51%              ] nvtx-async.nsys-rep
-[1/1] [=============59%            ] nvtx-async.nsys-rep
-[1/1] [===================79%      ] nvtx-async.nsys-rep
-[1/1] [=====================86%    ] nvtx-async.nsys-rep
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[1/1] [==========48%               ] nvtx-async.nsys-rep
+[1/1] [===========52%              ] nvtx-async.nsys-rep
+[1/1] [==============61%           ] nvtx-async.nsys-rep
+[1/1] [===================80%      ] nvtx-async.nsys-rep
+[1/1] [=====================87%    ] nvtx-async.nsys-rep
 [1/1] [========================100%] nvtx-async.nsys-rep
 </pre></div>
 </div>
